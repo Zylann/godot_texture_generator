@@ -16,14 +16,19 @@ const _scalar_type_members = "xyzw"
 class Expr:
 	var code = ""
 	var type = ""
-	#var composite = true
+	var composite = true
 	
 	func duplicate():
 		var e = get_script().new()
 		e.code = code
 		e.type = type
-		#e.composite = composite
+		e.composite = composite
 		return e
+	
+	func get_code_for_op():
+		if composite:
+			return str("(", code, ")")
+		return code
 
 
 var _graph = null
@@ -70,6 +75,7 @@ func _generate():
 				var e = Expr.new()
 				e.code = "UV"
 				e.type = "vec2"
+				e.composite = false
 				expressions = [e]
 				
 			"Multiply":
@@ -77,7 +83,7 @@ func _generate():
 				var b_exp = _get_input_expression_or_default(node, 1, "float")
 				var ie = _autocast_pair(a_exp, b_exp)
 				var e = Expr.new()
-				e.code = str("(", ie[0].code, ") * (", ie[1].code, ")")
+				e.code = str(ie[0].get_code_for_op(), " * ", ie[1].get_code_for_op())
 				e.type = ie[0].type
 				expressions = [e]
 			
@@ -110,15 +116,17 @@ func _generate():
 		
 		for i in len(node.outputs):
 			if len(node.outputs[i]) > 1:
-				# Output used by more than one node,
-				# store result in a var to avoid redoing the same calculation
-				var var_name = str("v", node.id, "_", i)
 				var prev_exp = expressions[i]
-				_statements.append(str(prev_exp.type, " ", var_name, " = ", prev_exp.code, ";"))
-				var ve = Expr.new()
-				ve.code = var_name
-				ve.type = prev_exp.type
-				expressions[i] = ve
+				if prev_exp.composite:
+					# Complex output used by more than one node,
+					# store result in a var to avoid redoing the same calculation
+					var var_name = str("v", node.id, "_", i)
+					_statements.append(str(prev_exp.type, " ", var_name, " = ", prev_exp.code, ";"))
+					var ve = Expr.new()
+					ve.code = var_name
+					ve.type = prev_exp.type
+					ve.composite = false
+					expressions[i] = ve
 		
 		_expressions[node.id] = expressions
 
@@ -137,6 +145,7 @@ func _get_input_default_expression(node, input_index, data_type):
 	else:
 		e.code = str(data_type, "(", v, ")")
 	e.type = data_type
+	e.composite = false
 	return e
 
 
