@@ -7,7 +7,8 @@ const DAG = preload("./graph.gd")
 const CodeFont = preload("./fonts/hack_regular.tres")
 
 onready var _graph_view = get_node("VBoxContainer/MainView/GraphView")
-onready var _codes_tab_container = get_node("VBoxContainer/MainView/CodeView/TabContainer")
+onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/CodeView/TabContainer")
+onready var _preview = get_node("VBoxContainer/MainView/BottomPanel/Preview")
 
 
 func _ready():
@@ -98,6 +99,13 @@ func _on_GraphView_graph_changed():
 		ed.syntax_highlighting = true
 		ed.add_font_override("font", CodeFont)
 		ed.name = key
-		ed.text = res[key]
+		var code = res[key]
+		ed.text = code
 		_codes_tab_container.add_child(ed)
+		
+		var shader = Shader.new()
+		shader.code = code
+		var mat = ShaderMaterial.new()
+		mat.shader = shader
+		_preview.material = mat
 
