@@ -32,6 +32,15 @@ const _node_types = {
 			{"name": "out", "type": "scalar"}
 		]
 	},
+	"Sin": {
+		"family": "operation",
+		"inputs": [
+			{"name": "in", "type": "scalar", "default": 0}
+		],
+		"outputs": [
+			{"name": "out", "type": "scalar"}
+		]
+	},
 	"GaussianBlur": {
 		"family": "composition",
 		"inputs": [

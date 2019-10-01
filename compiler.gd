@@ -79,7 +79,13 @@ func _generate():
 				var e = Expr.new()
 				e.code = str("(", ie[0].code, ") * (", ie[1].code, ")")
 				e.type = ie[0].type
-				print(e.type)
+				expressions = [e]
+			
+			"Sin":
+				var a_exp = _get_input_expression_or_default(node, 0, "float")
+				var e = Expr.new()
+				e.code = str("sin(", a_exp.code, ")")
+				e.type = a_exp.type
 				expressions = [e]
 
 			"GaussianBlur":
