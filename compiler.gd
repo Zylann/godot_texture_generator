@@ -2,6 +2,11 @@
 const NodeDefs = preload("./node_defs.gd")
 
 
+class Expr:
+	var code = ""
+	var type = ""
+
+
 var _graph = null
 # All statements gathered so far
 var _statements = []
@@ -25,9 +30,9 @@ func compile():
 func _generate():
 	
 	var parse_list = _graph.evaluate()
-	print("----")
-	for node in parse_list:
-		print("[", node.id, "] ", node.data.type)
+#	print("----")
+#	for node in parse_list:
+#		print("[", node.id, "] ", node.data.type)
 	
 	_expressions.clear()
 	_statements.clear()
@@ -42,47 +47,65 @@ func _generate():
 		match node.data.type:
 			
 			"TextureCoordinates":
-				expressions = ["UV"]
+				var e = Expr.new()
+				e.code = "UV"
+				e.type = "vec2"
+				expressions = [e]
 				
 			"Multiply":
-				var a_code = _get_input_code(node, 0)
-				var b_code = _get_input_code(node, 1)
-				expressions = [str("(", a_code, ") * (", b_code, ")")]
+				var a_exp = _get_input_expression(node, 0)
+				var b_exp = _get_input_expression(node, 1)
+				var e = Expr.new()
+				# TODO Type conversions
+				e.code = str("(", a_exp.code, ") * (", b_exp.code, ")")
+				e.type = a_exp.type
+				expressions = [e]
 
 			"GaussianBlur":
+				# TODO mark final
 				# TODO Not correct
 				expressions = ["TEXTURE"]
 
 			"Output":
-				var a_code = _get_input_code(node, 0)
+				var a_exp = _get_input_expression(node, 0)
 				# TODO mark final
-				_statements.append(str("COLOR = ", a_code, ";"))
+				_statements.append(str("COLOR = ", a_exp.code, ";"))
 			
 			"Texture":
 				# TODO Not correct
-				var tex_code = _get_input_code(node, 0)
-				var uv_code = _get_input_code(node, 1)
-				expressions = [str("texture(", tex_code, ", ", uv_code, ")")]
+				var tex_exp = _get_input_expression(node, 0)
+				var uv_exp = _get_input_expression(node, 1)
+				var e = Expr.new()
+				e.code = str("texture(", tex_exp.code, ", ", uv_exp.code, ")")
+				e.type = "vec4"
+				expressions = [e]
 		
 		for i in len(node.outputs):
 			if len(node.outputs[i]) > 1:
 				# Output used by more than one node,
 				# store result in a var to avoid redoing the same calculation
 				var var_name = str("v", node.id, "_", i)
-				_statements.append(str(var_name, " = ", expressions[i], ";"))
-				expressions[i] = var_name
+				var prev_exp = expressions[i]
+				_statements.append(str(prev_exp.type, " ", var_name, " = ", prev_exp.code, ";"))
+				var ve = Expr.new()
+				ve.code = var_name
+				ve.type = prev_exp.type
+				expressions[i] = ve
 		
 		_expressions[node.id] = expressions
 
 
-func _get_input_code(node, input_index):
+func _get_input_expression(node, input_index):
 	if len(node.inputs[input_index]) != 1:
 		# That input is not connected, use value
 		# TODO Handle slot values
 		var type = NodeDefs.get_type_by_name(node.data.type)
 		var input_def = type.inputs[input_index]
 		var v = input_def.default
-		return str(v)
+		var e = Expr.new()
+		e.code = str(v)
+		e.type = input_def.type
+		return e
 	else:
 		var arc = _graph.get_arc(node.inputs[input_index][0])
 		# TODO Have a flag to know if parenthesis are needed

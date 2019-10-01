@@ -19,35 +19,35 @@ const _node_types = {
 	"TextureCoordinates": {
 		"family": "input",
 		"outputs": [
-			{"name": "uv", "type": "Vector2"}
+			{"name": "uv", "type": "vec2"}
 		],
 	},
 	"Multiply": {
 		"family": "operation",
 		"inputs": [
-			{"name": "a", "type": "Scalar", "default": 1},
-			{"name": "b", "type": "Scalar", "default": 1}
+			{"name": "a", "type": "scalar", "default": 1},
+			{"name": "b", "type": "scalar", "default": 1}
 		],
 		"outputs": [
-			{"name": "out", "type": "Scalar"}
+			{"name": "out", "type": "scalar"}
 		]
 	},
 	"GaussianBlur": {
 		"family": "composition",
 		"inputs": [
-			{"name": "in", "type": "Scalar", "default": 0}
+			{"name": "in", "type": "scalar", "default": 0}
 		],
 		"params": [
-			{"name": "r", "type": "Int", "default": 1}
+			{"name": "r", "type": "int", "default": 1}
 		],
 		"outputs": [
-			{"name": "out", "type": "Scalar"}
+			{"name": "out", "type": "scalar"}
 		]
 	},
 	"Output": {
 		"family": "output",
 		"inputs": [
-			{"name": "color", "type": "Scalar", "default": 0}
+			{"name": "color", "type": "scalar", "default": 0}
 		]
 	},
 	"Texture": {
@@ -55,12 +55,12 @@ const _node_types = {
 		"inputs": [
 			# Texture can optionally come from a previous pass, otherwise will be taken from param
 			{"name": "texture", "type": "Texture", "default": null},
-			{"name": "uv", "type": "Vector2"}
+			{"name": "uv", "type": "vec2"}
 		],
 		"params": [
 		],
 		"outputs": [
-			{"name": "color", "type": "Vector4"}
+			{"name": "color", "type": "vec4"}
 		]
 	}
 }

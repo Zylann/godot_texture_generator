@@ -1,3 +1,9 @@
+
+# GUI displaying a graph. Some functions allow to edit it as well.
+# This UI doesn't depend on the logic of the graph,
+# it only knows that the graph is a DAG and nodes have types.
+# Specific logic is deferred to callbacks.
+
 extends Control
 
 const NodeScene = preload("./graph_view_node.tscn")
