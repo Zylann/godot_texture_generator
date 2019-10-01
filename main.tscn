@@ -1,0 +1,63 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://main.gd" type="Script" id=1]
+[ext_resource path="res://graph_view.tscn" type="PackedScene" id=2]
+
+[node name="Main" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="MenuBar" type="Panel" parent="VBoxContainer"]
+editor/display_folded = true
+margin_right = 1024.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 0, 24 )
+
+[node name="MenuButton" type="MenuButton" parent="VBoxContainer/MenuBar"]
+margin_right = 12.0
+margin_bottom = 20.0
+text = "File"
+
+[node name="MainView" type="VSplitContainer" parent="VBoxContainer"]
+margin_top = 28.0
+margin_right = 1024.0
+margin_bottom = 572.0
+size_flags_vertical = 3
+split_offset = 400
+
+[node name="GraphView" parent="VBoxContainer/MainView" instance=ExtResource( 2 )]
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 0.0
+margin_top = 0.0
+margin_right = 1024.0
+margin_bottom = 400.0
+
+[node name="CodeView" type="ColorRect" parent="VBoxContainer/MainView"]
+margin_top = 412.0
+margin_right = 1024.0
+margin_bottom = 544.0
+color = Color( 0, 0, 0, 0.815686 )
+
+[node name="TabContainer" type="TabContainer" parent="VBoxContainer/MainView/CodeView"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+tab_align = 0
+
+[node name="StatusBar" type="Panel" parent="VBoxContainer"]
+margin_top = 576.0
+margin_right = 1024.0
+margin_bottom = 600.0
+rect_min_size = Vector2( 0, 24 )
+
+[node name="Label" type="Label" parent="VBoxContainer/StatusBar"]
+margin_right = 40.0
+margin_bottom = 14.0
+text = "Status"
+[connection signal="create_node_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_create_node_requested"]
+[connection signal="graph_changed" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_graph_changed"]

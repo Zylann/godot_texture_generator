@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://graph_view.gd" type="Script" id=1]
+
+[node name="GraphView" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 4.0
+margin_right = -4.0
+margin_bottom = -4.0
+script = ExtResource( 1 )
+
+[node name="CreateMenu" type="PopupMenu" parent="."]
+margin_right = 20.0
+margin_bottom = 20.0
+[connection signal="index_pressed" from="CreateMenu" to="." method="_on_CreateMenu_index_pressed"]
