@@ -36,6 +36,7 @@ var _graph = null
 var _statements = []
 # node id => [output expressions]
 var _expressions = {}
+var _next_var_id = 0
 
 
 func _init(graph):
@@ -120,7 +121,7 @@ func _generate():
 				if prev_exp.composite:
 					# Complex output used by more than one node,
 					# store result in a var to avoid redoing the same calculation
-					var var_name = str("v", node.id, "_", i)
+					var var_name = _generate_var_name()
 					_statements.append(str(prev_exp.type, " ", var_name, " = ", prev_exp.code, ";"))
 					var ve = Expr.new()
 					ve.code = var_name
@@ -216,6 +217,12 @@ func _autocast(e, dst_type):
 		
 	e.type = dst_type
 	return e
+
+
+func _generate_var_name():
+	var vn = str("v", _next_var_id)
+	_next_var_id += 1
+	return vn
 
 
 func _get_full_code():
