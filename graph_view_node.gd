@@ -15,6 +15,7 @@ var _inputs = []
 var _outputs = []
 var _params = []
 var _pressed = false
+var _controller = null
 
 
 func _gather_nodes():
@@ -23,7 +24,7 @@ func _gather_nodes():
 
 
 func _ready():
-	_gather_nodes()	
+	_gather_nodes()
 
 
 func get_title() -> String:
@@ -36,16 +37,14 @@ func set_title(title: String):
 	_title.text = title
 
 
-func add_input(control: Control):
-	return _add_item(control, Item.MODE_INPUT)
+func get_controller():
+	return _controller
 
 
-func add_output(control: Control):
-	return _add_item(control, Item.MODE_OUTPUT)
-
-
-func add_param(control: Control):
-	return _add_item(control, Item.MODE_PARAM)
+func set_controller(c):
+	assert(_controller == null)
+	assert(c != null)
+	_controller = c
 
 
 func get_id() -> int:
@@ -77,11 +76,11 @@ func get_item(mode, index):
 	return null
 
 
-func _add_item(control: Control, mode: int) -> Control:
+func add_item(mode: int, label_text: String) -> Control:
 	
 	var item = ItemScene.instance()
 	item.set_mode(mode)
-	item.set_control(control)
+	item.set_label_text(label_text)
 	item.connect("connection_dragging", self, "_on_item_connection_dragging", [item])
 	item.connect("connection_drag_stopped", self, "_on_item_connection_drag_stopped", [item])
 	_container.add_child(item)
@@ -100,7 +99,7 @@ func _add_item(control: Control, mode: int) -> Control:
 		Item.MODE_OUTPUT:
 			item.set_slot_index(len(_outputs))
 			_outputs.append(item)
-	
+		
 	return item
 	
 

@@ -14,6 +14,7 @@ var _mode = MODE_PARAM
 var _control: Control = null
 var _pressed = false
 var _slot_index: int = -1
+var _label: Label = null
 
 
 func _gather_nodes():
@@ -21,6 +22,8 @@ func _gather_nodes():
 		_input_slot = get_node("InputSlot")
 	if _output_slot == null:
 		_output_slot = get_node("OutputSlot")
+	if _label == null:
+		_label = get_node("Label")
 
 
 func _ready():
@@ -32,6 +35,16 @@ func set_mode(mode):
 	_input_slot.visible = (mode == MODE_INPUT)
 	_output_slot.visible = (mode == MODE_OUTPUT)
 	_mode = mode
+	if _mode == MODE_OUTPUT:
+		_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_label.align = Label.ALIGN_RIGHT
+	else:
+		_label.align = Label.ALIGN_LEFT
+
+
+func set_label_text(text: String):
+	_label.text = text
+	_label.visible = text != ""
 
 
 func get_mode():
@@ -57,7 +70,8 @@ func set_control(control: Control):
 	
 	_control = control
 	_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_child_below_node(_input_slot, control)
+	_gather_nodes()
+	add_child_below_node(_label, control)
 
 
 func get_control() -> Control:

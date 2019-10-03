@@ -85,8 +85,29 @@ func try_add_arc(from_id, from_slot, to_id, to_slot):
 	# TODO Check connection types validity
 	
 	_graph.add_arc(from_id, from_slot, to_id, to_slot)
+	
+	# Hide editor on the input since it's now overriden by the connection
+	var to_node_view = _nodes[to_id]
+	var to_item = to_node_view.get_item(to_slot, NodeItem.MODE_INPUT)
+	var item_control = to_item.get_control()
+	if item_control != null:
+		item_control.hide()
+	
 	emit_signal("graph_changed")
 	print("Added arc")
+
+
+func _remove_arc(arc_id):
+	var arc = _graph.get_arc(arc_id)
+	_graph.remove_arc(arc_id)
+	
+	var to_node_view = _nodes[arc.to_id]
+	var to_item = to_node_view.get_item(arc.to_slot, NodeItem.MODE_INPUT)
+	var item_control = to_item.get_control()
+	if item_control != null:
+		item_control.show()
+		
+	emit_signal("graph_changed")
 
 
 func _gui_input(event):
@@ -120,13 +141,13 @@ func _on_node_connection_dragging(item, node_view):
 				# That input is connected, dragging will disconnect it
 				var arc_id = slot[0]
 				var arc = _graph.get_arc(arc_id)
-				_graph.remove_arc(arc_id)
-				emit_signal("graph_changed")
 				
 				# Override `from` variables
 				_dragging_from_id = arc.from_id
 				var from_node_view = _nodes[arc.from_id]
 				_dragging_from_item = from_node_view.get_item(NodeItem.MODE_OUTPUT, arc.from_slot)
+
+				_remove_arc(arc_id)
 	
 	update()
 	# TODO Snap to connections?

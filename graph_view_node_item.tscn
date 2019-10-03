@@ -17,6 +17,13 @@ margin_bottom = 24.0
 rect_min_size = Vector2( 24, 24 )
 color = Color( 1, 1, 1, 0.25098 )
 
+[node name="Label" type="Label" parent="."]
+visible = false
+margin_left = 28.0
+margin_top = 5.0
+margin_right = 28.0
+margin_bottom = 19.0
+
 [node name="OutputSlot" type="ColorRect" parent="."]
 margin_left = 28.0
 margin_right = 52.0
