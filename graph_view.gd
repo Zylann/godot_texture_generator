@@ -88,7 +88,7 @@ func try_add_arc(from_id, from_slot, to_id, to_slot):
 	
 	# Hide editor on the input since it's now overriden by the connection
 	var to_node_view = _nodes[to_id]
-	var to_item = to_node_view.get_item(to_slot, NodeItem.MODE_INPUT)
+	var to_item = to_node_view.get_item(NodeItem.MODE_INPUT, to_slot)
 	var item_control = to_item.get_control()
 	if item_control != null:
 		item_control.hide()
@@ -102,7 +102,7 @@ func _remove_arc(arc_id):
 	_graph.remove_arc(arc_id)
 	
 	var to_node_view = _nodes[arc.to_id]
-	var to_item = to_node_view.get_item(arc.to_slot, NodeItem.MODE_INPUT)
+	var to_item = to_node_view.get_item(NodeItem.MODE_INPUT, arc.to_slot)
 	var item_control = to_item.get_control()
 	if item_control != null:
 		item_control.show()
