@@ -18,12 +18,14 @@ const _node_families = [
 const _node_types = {
 	"TextureCoordinates": {
 		"family": "input",
+		"category": "Input",
 		"outputs": [
 			{"name": "uv", "type": "vec2"}
 		],
 	},
 	"Multiply": {
 		"family": "operation",
+		"category": "Math",
 		"inputs": [
 			{"name": "a", "type": "scalar", "default": 1},
 			{"name": "b", "type": "scalar", "default": 1}
@@ -34,6 +36,7 @@ const _node_types = {
 	},
 	"Sin": {
 		"family": "operation",
+		"category": "Math",
 		"inputs": [
 			{"name": "in", "type": "scalar", "default": 0}
 		],
@@ -43,6 +46,7 @@ const _node_types = {
 	},
 	"GaussianBlur": {
 		"family": "composition",
+		"category": "Effects",
 		"inputs": [
 			{"name": "in", "type": "scalar", "default": 0}
 		],
@@ -55,12 +59,14 @@ const _node_types = {
 	},
 	"Output": {
 		"family": "output",
+		"category": "Output",
 		"inputs": [
 			{"name": "color", "type": "color", "default": Color(0,0,0,1)}
 		]
 	},
 	"Texture": {
 		"family": "operation",
+		"category": "Texture",
 		"inputs": [
 			# Texture can optionally come from a previous pass, otherwise will be taken from param
 			{"name": "texture", "type": "Texture", "default": null},
@@ -74,6 +80,7 @@ const _node_types = {
 	},
 	"Construct": {
 		"family": "operation",
+		"category": "Vector",
 		"inputs": [
 			{"name": "x", "type": "float", "default": 0.0},
 			{"name": "y", "type": "float", "default": 0.0},
@@ -86,6 +93,7 @@ const _node_types = {
 	},
 	"Separate": {
 		"family": "operation",
+		"category": "Vector",
 		"inputs": [
 			{"name": "v", "type": "vec4"}
 		],

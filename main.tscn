@@ -74,5 +74,5 @@ rect_min_size = Vector2( 0, 24 )
 margin_right = 40.0
 margin_bottom = 14.0
 text = "Status"
-[connection signal="create_node_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_create_node_requested"]
+[connection signal="context_menu_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_context_menu_requested"]
 [connection signal="graph_changed" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_graph_changed"]

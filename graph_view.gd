@@ -11,19 +11,17 @@ const GraphViewNode = preload("./graph_view_node.gd")
 const NodeItem = preload("./graph_view_node_item.gd")
 const DAG = preload("./graph.gd")
 
-signal create_node_requested(type_name, position)
 signal graph_changed
+signal context_menu_requested(position)
 
 var _graph = DAG.new()
-var _create_menu: PopupMenu = null
 var _nodes = {}
 var _dragging_from_id = -1
 var _dragging_from_item = null
 
 
 func _gather_nodes():
-	if _create_menu == null:
-		_create_menu = get_node("CreateMenu")
+	pass
 
 
 func _ready():
@@ -71,13 +69,6 @@ func add_node(node, title) -> Control:
 	return node_view
 
 
-func add_node_type(type_name: String):
-	_gather_nodes()
-	var i = _create_menu.get_item_count()
-	_create_menu.add_item(type_name)
-	_create_menu.set_item_metadata(i, type_name)
-
-
 func try_add_arc(from_id, from_slot, to_id, to_slot):
 	
 	if not _graph.check_connection(from_id, from_slot, to_id, to_slot):
@@ -114,14 +105,7 @@ func _gui_input(event):
 	if event is InputEventMouseButton:
 		if event.pressed:
 			if event.button_index == BUTTON_RIGHT:
-				_create_menu.rect_position = event.position
-				_create_menu.popup()
-
-
-func _on_CreateMenu_index_pressed(index):
-	var type_name = _create_menu.get_item_metadata(index)
-	var pos = _create_menu.rect_position
-	emit_signal("create_node_requested", type_name, pos)
+				emit_signal("context_menu_requested", event.position)
 
 
 func _on_node_connection_dragging(item, node_view):
