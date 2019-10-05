@@ -71,6 +71,30 @@ const _node_types = {
 		"outputs": [
 			{"name": "color", "type": "vec4"}
 		]
+	},
+	"Construct": {
+		"family": "operation",
+		"inputs": [
+			{"name": "x", "type": "float", "default": 0.0},
+			{"name": "y", "type": "float", "default": 0.0},
+			{"name": "z", "type": "float", "default": 0.0},
+			{"name": "w", "type": "float", "default": 1.0}
+		],
+		"outputs": [
+			{"name": "v", "type": "vec4"}
+		]
+	},
+	"Separate": {
+		"family": "operation",
+		"inputs": [
+			{"name": "v", "type": "vec4"}
+		],
+		"outputs": [
+			{"name": "x", "type": "float"},
+			{"name": "y", "type": "float"},
+			{"name": "z", "type": "float"},
+			{"name": "w", "type": "float"}
+		]
 	}
 }
 

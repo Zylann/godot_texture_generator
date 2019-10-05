@@ -114,6 +114,36 @@ func _generate():
 				e.code = str("texture(", tex_exp.code, ", ", uv_exp.code, ")")
 				e.type = "vec4"
 				expressions = [e]
+			
+			"Construct":
+				var e0 = _get_input_expression_or_default(node, 0, "float")
+				var e1 = _get_input_expression_or_default(node, 1, "float")
+				var e2 = _get_input_expression_or_default(node, 2, "float")
+				var e3 = _get_input_expression_or_default(node, 3, "float")
+				e0 = _autocast(e0, "float")
+				e1 = _autocast(e1, "float")
+				e2 = _autocast(e2, "float")
+				e3 = _autocast(e3, "float")
+				var e = Expr.new()
+				e.code = str("vec4(", e0.code, ", ", e1.code, ", ", e2.code, ", ", e3.code, ")")
+				e.type = "vec4"
+				expressions = [e]
+			
+			"Separate":
+				var e = _get_input_expression_or_default(node, 0, "vec4")
+				var e0 = Expr.new()
+				var e1 = Expr.new()
+				var e2 = Expr.new()
+				var e3 = Expr.new()
+				e0.code = str(e.code, ".x")
+				e1.code = str(e.code, ".y")
+				e2.code = str(e.code, ".z")
+				e3.code = str(e.code, ".w")
+				e0.type = "float"
+				e1.type = "float"
+				e2.type = "float"
+				e3.type = "float"
+				expressions = [e0, e1, e2, e3]
 		
 		for i in len(node.outputs):
 			if len(node.outputs[i]) > 1:
