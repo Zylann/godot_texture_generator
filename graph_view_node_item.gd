@@ -13,6 +13,7 @@ var _output_slot: Control = null
 var _mode = MODE_PARAM
 var _control: Control = null
 var _pressed = false
+var _dragging = false
 var _slot_index: int = -1
 var _label: Label = null
 
@@ -116,10 +117,13 @@ func _on_Slot_gui_input(event, mode):
 		else:
 			if _pressed:
 				_pressed = false
-				emit_signal("connection_drag_stopped")
+				if _dragging:
+					_dragging = false
+					emit_signal("connection_drag_stopped")
 	
 	elif event is InputEventMouseMotion:
 		if _pressed:
+			_dragging = true
 			emit_signal("connection_dragging")
 
 
