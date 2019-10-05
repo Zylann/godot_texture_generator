@@ -10,6 +10,7 @@ const NodeScene = preload("./graph_view_node.tscn")
 const GraphViewNode = preload("./graph_view_node.gd")
 const NodeItem = preload("./graph_view_node_item.gd")
 const DAG = preload("./graph.gd")
+const Util = preload("./util.gd")
 
 signal graph_changed
 signal context_menu_requested(position)
@@ -217,15 +218,22 @@ func _draw():
 	
 
 func _draw_arc(from, to):
-	var pre = Vector2(40, 0)
+	var pre = Vector2(min(40, 0.3*from.distance_to(to)), 0)
 	var p1 = from + pre
 	var p2 = to - pre
 	var color = Color(1, 1, 0, 0.6)
-	draw_polyline(PoolVector2Array([from, p1, p2, to]), color, 3)
+	#draw_polyline(PoolVector2Array([from, p1, p2, to]), color, 3)
+	var pts = [from, p1, p2, to]
+#	for p in pts:
+#		draw_circle(p, 4, Color(0,0,1))
+	pts = Util.angle_tessellate(pts, 30)
+	draw_polyline(PoolVector2Array(pts), color, 3)
+	
+	color.a = 1.0
+	color *= 1.25 # hack
 	draw_circle(from, 4, color)
 	draw_circle(to, 4, color)
 
 
 func _on_node_moved():
 	update()
-
