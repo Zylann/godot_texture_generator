@@ -7,8 +7,7 @@ signal connection_dragging(from_item)
 signal connection_drag_stopped(from_item)
 signal moved
 
-onready var _container = get_node("VBoxContainer")
-
+var _container : Container = null
 var _title: Label = null
 var _id: int = -1
 var _inputs = []
@@ -21,6 +20,8 @@ var _controller = null
 func _gather_nodes():
 	if _title == null:
 		_title = get_node("VBoxContainer/Label")
+	if _container == null:
+		_container = get_node("VBoxContainer")
 
 
 func _ready():
@@ -78,6 +79,8 @@ func get_item(mode, index):
 
 func add_item(mode: int, label_text: String) -> Control:
 	
+	_gather_nodes()
+	
 	var item = ItemScene.instance()
 	item.set_mode(mode)
 	item.set_label_text(label_text)
@@ -124,3 +127,10 @@ func _gui_input(event):
 			rect_position += event.relative
 			emit_signal("moved")
 
+
+func _get_minimum_size():
+	_gather_nodes()
+	var minsize = _container.get_combined_minimum_size()
+	minsize.x += _container.margin_left * 2
+	minsize.y += _container.margin_top * 2
+	return minsize

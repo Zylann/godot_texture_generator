@@ -220,7 +220,10 @@ func _draw_arc(from, to):
 	var pre = Vector2(40, 0)
 	var p1 = from + pre
 	var p2 = to - pre
-	draw_polyline(PoolVector2Array([from, p1, p2, to]), Color(1, 1, 0, 0.6), 3)
+	var color = Color(1, 1, 0, 0.6)
+	draw_polyline(PoolVector2Array([from, p1, p2, to]), color, 3)
+	draw_circle(from, 4, color)
+	draw_circle(to, 4, color)
 
 
 func _on_node_moved():
