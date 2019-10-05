@@ -56,7 +56,7 @@ const _node_types = {
 	"Output": {
 		"family": "output",
 		"inputs": [
-			{"name": "color", "type": "scalar", "default": 0}
+			{"name": "color", "type": "color", "default": Color(0,0,0,1)}
 		]
 	},
 	"Texture": {

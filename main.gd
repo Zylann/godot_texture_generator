@@ -5,7 +5,7 @@ const NodeDefs = preload("./node_defs.gd")
 const Compiler = preload("./compiler.gd")
 const DAG = preload("./graph.gd")
 const CodeFont = preload("./fonts/hack_regular.tres")
-const NodeItem = preload("./graph_view_node_item.gd")
+const NodeController = preload("./node_controller.gd")
 
 onready var _graph_view = get_node("VBoxContainer/MainView/GraphView")
 onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/CodeView/TabContainer")
@@ -57,29 +57,26 @@ func _on_GraphView_create_node_requested(type_name, position):
 func _add_graph_node(type_name, position = Vector2()):
 	
 	var node = create_graph_node(type_name)
-	var type = NodeDefs.get_type_by_name(type_name)
 	var node_view = _graph_view.add_node(node, type_name)
 	node_view.rect_position = position
 	
-	if type.has("outputs"):
-		for i in len(type.outputs):
-			var p = type.outputs[i]
-			var item = node_view.add_item(NodeItem.MODE_OUTPUT, p.name)
-
-	if type.has("params"):
-		for i in len(type.params):
-			var p = type.params[i]
-			node_view.add_item(NodeItem.MODE_PARAM, p.name)
-
-	if type.has("inputs"):
-		for i in len(type.inputs):
-			var p = type.inputs[i]
-			var item = node_view.add_item(NodeItem.MODE_INPUT, p.name)
-			var temp = SpinBox.new()
-			item.set_control(temp)
+	var controller = NodeController.new()
+	node_view.add_child(controller)
+	node_view.set_controller(controller)
+	
+	controller.setup_for_node_type(type_name)
+	controller.connect("param_changed", self, "_on_node_controller_param_changed")
 
 
 func _on_GraphView_graph_changed():
+	_recompile_graph()
+
+
+func _on_node_controller_param_changed():
+	_recompile_graph()
+	
+
+func _recompile_graph():
 	for i in _codes_tab_container.get_child_count():
 		var child = _codes_tab_container.get_child(i)
 		child.queue_free()

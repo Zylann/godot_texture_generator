@@ -133,18 +133,28 @@ func _generate():
 
 
 func _get_input_default_expression(node, input_index, data_type):
-	# TODO Handle slot values
+	
 	var node_type = NodeDefs.get_type_by_name(node.data.type)
 	var input_def = node_type.inputs[input_index]
-	var v = input_def.default
-	var e = Expr.new()
-	if data_type == "float":
-		# TODO Not pretty
-		e.code = "1.0" if int(v) == 1 else "0.0"
-	elif data_type == "vec4" and v == 0:
-		e.code = "vec4(0.0, 0.0, 0.0, 1.0)"
+	var params = node.data.params
+	
+	var v
+	if params.has(input_def.name) and params[input_def.name] != null:
+		v = params[input_def.name]
 	else:
-		e.code = str(data_type, "(", v, ")")
+		v = input_def.default
+		
+	var e = Expr.new()
+	e.code = _var_to_shader(v)
+	
+#	if data_type == "float":
+#		# TODO Not pretty
+#		e.code = "1.0" if int(v) == 1 else "0.0"
+#	elif data_type == "vec4" and v == 0:
+#		e.code = "vec4(0.0, 0.0, 0.0, 1.0)"
+#	else:
+#		e.code = str(data_type, "(", v, ")")
+
 	e.type = data_type
 	e.composite = false
 	return e
@@ -236,3 +246,37 @@ func _get_full_code():
 	
 	return PoolStringArray(lines).join("\n")
 
+
+static func _var_to_shader(v, no_alpha=false):
+
+	match typeof(v):
+
+		TYPE_REAL:
+			if int(v) == v:
+				return str(v, ".0")
+			else:
+				return str(v)
+
+		TYPE_INT:
+			return str(v, ".0")
+
+		TYPE_VECTOR2:
+			return str("vec2(", \
+				_var_to_shader(v.x), ", ", \
+				_var_to_shader(v.y), ")")
+
+		TYPE_VECTOR3:
+			return str("vec3(", \
+				_var_to_shader(v.x), ", ", \
+				_var_to_shader(v.y), ", ", \
+				_var_to_shader(v.z), ")")
+
+		TYPE_COLOR:
+			if no_alpha:
+				return _var_to_shader(Vector3(v.r, v.g, v.b))
+			return str("vec4(", \
+				_var_to_shader(v.r), ", ", \
+				_var_to_shader(v.g), ", ", \
+				_var_to_shader(v.b), ", ", \
+				_var_to_shader(v.a), ")")
+		
