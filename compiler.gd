@@ -42,10 +42,11 @@ class Expr:
 
 
 class RenderStep:
+	var shader_code = ""
 	var shader = null
 	var composition = null
-	var inputs = {}
-	var outputs = {}
+#	var inputs = {}
+#	var outputs = {}
 
 
 # Read-only graph
@@ -120,7 +121,9 @@ func _generate_pass(parse_list):
 	
 	_process_output_node(last_node)
 	
-	rs.shader = _get_full_code()
+	rs.shader_code = _get_full_code()
+	rs.shader = Shader.new()
+	rs.shader.code = rs.shader_code
 	
 	return rs
 

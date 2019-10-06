@@ -10,11 +10,15 @@ const NodeController = preload("./node_controller.gd")
 onready var _graph_view = get_node("VBoxContainer/MainView/GraphView")
 onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/CodeView/TabContainer")
 onready var _preview = get_node("VBoxContainer/MainView/BottomPanel/Preview")
-onready var _graph_view_context_menu : PopupMenu = null
+onready var _renderer = get_node("Renderer")
+onready var _status_label = get_node("VBoxContainer/StatusBar/Label")
+
+var _graph_view_context_menu : PopupMenu = null
 
 
 func _ready():
 	NodeDefs.check()
+	_preview.texture = _renderer.get_texture()
 
 
 static func create_graph_node(type_name):
@@ -70,13 +74,23 @@ func _on_node_controller_param_changed():
 	
 
 func _recompile_graph():
-	for i in _codes_tab_container.get_child_count():
-		var child = _codes_tab_container.get_child(i)
-		child.queue_free()
 	
 	var graph = _graph_view.get_graph()
 	var compiler = Compiler.new(graph)
 	var render_steps = compiler.compile()
+	
+	_display_render_steps_in_debug_panel(render_steps)
+	
+	_renderer.submit(render_steps)
+	
+	# TODO Make renderer
+
+
+func _display_render_steps_in_debug_panel(render_steps):
+	
+	for i in _codes_tab_container.get_child_count():
+		var child = _codes_tab_container.get_child(i)
+		child.queue_free()
 	
 	for i in len(render_steps):
 		var rs = render_steps[i]
@@ -85,18 +99,11 @@ func _recompile_graph():
 		ed.syntax_highlighting = true
 		ed.add_font_override("font", CodeFont)
 		ed.name = str("Pass", i + 1)
-		var code = rs.shader
+		var code = rs.shader_code
 		if rs.composition != null:
 			code += str("\n\n// Composition: ", rs.composition.data.type, rs.composition.id)
 		ed.text = code
 		_codes_tab_container.add_child(ed)
-		
-		# TODO Make renderer
-#		var shader = Shader.new()
-#		shader.code = code
-#		var mat = ShaderMaterial.new()
-#		mat.shader = shader
-#		_preview.material = mat
 
 
 func _on_GraphView_context_menu_requested(position):
@@ -160,3 +167,6 @@ func _on_graph_view_context_menu_item_selected(index, menu, position):
 	var type_name = menu.get_item_metadata(index)
 	_add_graph_node(type_name, position)
 
+
+func _on_Renderer_progress_notified(progress):
+	_status_label.text = str("Rendering ", int(progress * 100.0), " %")

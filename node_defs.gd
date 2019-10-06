@@ -48,7 +48,7 @@ const _node_types = {
 		"family": "composition",
 		"category": "Effects",
 		"inputs": [
-			{"name": "in", "type": "scalar", "default": 0}
+			{"name": "in", "type": "vec4", "default": 0}
 		],
 		"params": [
 			{"name": "r", "type": "int", "default": 1}

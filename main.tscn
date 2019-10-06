@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://graph_view.tscn" type="PackedScene" id=2]
 [ext_resource path="res://icon.png" type="Texture" id=3]
+[ext_resource path="res://renderer.gd" type="Script" id=4]
 
 [node name="Main" type="Control"]
 anchor_right = 1.0
@@ -14,7 +15,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="MenuBar" type="Panel" parent="VBoxContainer"]
-editor/display_folded = true
 margin_right = 1024.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 0, 24 )
@@ -25,6 +25,7 @@ margin_bottom = 20.0
 text = "File"
 
 [node name="MainView" type="VSplitContainer" parent="VBoxContainer"]
+editor/display_folded = true
 margin_top = 28.0
 margin_right = 1024.0
 margin_bottom = 572.0
@@ -71,8 +72,16 @@ margin_bottom = 600.0
 rect_min_size = Vector2( 0, 24 )
 
 [node name="Label" type="Label" parent="VBoxContainer/StatusBar"]
-margin_right = 40.0
-margin_bottom = 14.0
+modulate = Color( 0.556863, 0.556863, 0.556863, 1 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 4.0
 text = "Status"
+
+[node name="Renderer" type="Node" parent="."]
+script = ExtResource( 4 )
+
 [connection signal="context_menu_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_context_menu_requested"]
 [connection signal="graph_changed" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_graph_changed"]
+[connection signal="progress_notified" from="Renderer" to="." method="_on_Renderer_progress_notified"]
