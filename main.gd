@@ -76,22 +76,27 @@ func _recompile_graph():
 	
 	var graph = _graph_view.get_graph()
 	var compiler = Compiler.new(graph)
-	var res = compiler.compile()
+	var render_steps = compiler.compile()
 	
-	for key in res:
+	for i in len(render_steps):
+		var rs = render_steps[i]
+		
 		var ed = TextEdit.new()
 		ed.syntax_highlighting = true
 		ed.add_font_override("font", CodeFont)
-		ed.name = key
-		var code = res[key]
+		ed.name = str("Pass", i + 1)
+		var code = rs.shader
+		if rs.composition != null:
+			code += str("\n\n// Composition: ", rs.composition.data.type, rs.composition.id)
 		ed.text = code
 		_codes_tab_container.add_child(ed)
 		
-		var shader = Shader.new()
-		shader.code = code
-		var mat = ShaderMaterial.new()
-		mat.shader = shader
-		_preview.material = mat
+		# TODO Make renderer
+#		var shader = Shader.new()
+#		shader.code = code
+#		var mat = ShaderMaterial.new()
+#		mat.shader = shader
+#		_preview.material = mat
 
 
 func _on_GraphView_context_menu_requested(position):

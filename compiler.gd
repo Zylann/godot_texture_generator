@@ -1,5 +1,6 @@
 
 const NodeDefs = preload("./node_defs.gd")
+const GraphEvaluator = preload("./compiler_graph_evaluator.gd")
 
 #const CONTEXT_BINOP = 1
 
@@ -10,12 +11,21 @@ const _scalar_type_dimension = {
 	"vec4": 4
 }
 
+const _scalar_type_defaults = {
+	"float": 0.0,
+	"vec2": Vector2(),
+	"vec3": Vector3(),
+	"vec4": Color()
+}
+
 const _scalar_type_members = "xyzw"
 
 
 class Expr:
 	var code = ""
 	var type = ""
+	# By default we assume expressions are complex.
+	# We set this to false only when we are sure it's just a variable or constant.
 	var composite = true
 	
 	func duplicate():
@@ -31,11 +41,22 @@ class Expr:
 		return code
 
 
+class RenderStep:
+	var shader = null
+	var composition = null
+	var inputs = {}
+	var outputs = {}
+
+
+# Read-only graph
 var _graph = null
+
 # All statements gathered so far
 var _statements = []
+
 # node id => [output expressions]
 var _expressions = {}
+
 var _next_var_id = 0
 
 
@@ -44,106 +65,32 @@ func _init(graph):
 
 
 func compile():
-	_generate()
-	# TODO Handle multiple outputs
-	# TODO Handle composition steps
-	return {
-		"output1": _get_full_code()
-	}
-
-
-func _generate():
 	
-	var parse_list = _graph.evaluate()
+	var graph_evaluator = GraphEvaluator.new(_graph)
+	var parse_lists = graph_evaluator.evaluate()
+	
 #	print("----")
 #	for node in parse_list:
 #		print("[", node.id, "] ", node.data.type)
+
+	var render_steps = []
+	
+	for parse_list in parse_lists:
+		var rs = _generate_pass(parse_list)
+		render_steps.append(rs)
+	
+	return render_steps
+
+
+func _generate_pass(parse_list):
 	
 	_expressions.clear()
 	_statements.clear()
 	
-	for node in parse_list:
+	for node_index in len(parse_list) - 1:
 		
-		var node_type_name = node.data.type
-		var node_type = NodeDefs.get_type_by_name(node_type_name)
-		#var code = CodeGen.new(node.id, len(type.outputs) if type.has("outputs") else 1)
-		
-		var expressions = null
-		
-		match node_type_name:
-			
-			"TextureCoordinates":
-				var e = Expr.new()
-				e.code = "UV"
-				e.type = "vec2"
-				e.composite = false
-				expressions = [e]
-				
-			"Multiply":
-				var a_exp = _get_input_expression_or_default(node, 0, "float")
-				var b_exp = _get_input_expression_or_default(node, 1, "float")
-				var ie = _autocast_pair(a_exp, b_exp)
-				var e = Expr.new()
-				e.code = str(ie[0].get_code_for_op(), " * ", ie[1].get_code_for_op())
-				e.type = ie[0].type
-				expressions = [e]
-			
-			"Sin":
-				var a_exp = _get_input_expression_or_default(node, 0, "float")
-				var e = Expr.new()
-				e.code = str("sin(", a_exp.code, ")")
-				e.type = a_exp.type
-				expressions = [e]
-
-			"GaussianBlur":
-				# TODO mark final
-				# TODO Not correct
-				expressions = ["TEXTURE"]
-
-			"Output":
-				var a_exp = _get_input_expression_or_default(node, 0, "vec4")
-				# TODO mark final
-				var e = _autocast(a_exp, "vec4") #node_type.inputs[0].type
-				_statements.append(str("COLOR = ", e.code, ";"))
-			
-			"Texture":
-				# TODO Not correct
-				var tex_exp = _get_input_expression(node, 0)
-				var uv_exp = _get_input_expression_or_default(node, 1, "vec2")
-				var e = Expr.new()
-				e.code = str("texture(", tex_exp.code, ", ", uv_exp.code, ")")
-				e.type = "vec4"
-				expressions = [e]
-			
-			"Construct":
-				var e0 = _get_input_expression_or_default(node, 0, "float")
-				var e1 = _get_input_expression_or_default(node, 1, "float")
-				var e2 = _get_input_expression_or_default(node, 2, "float")
-				var e3 = _get_input_expression_or_default(node, 3, "float")
-				e0 = _autocast(e0, "float")
-				e1 = _autocast(e1, "float")
-				e2 = _autocast(e2, "float")
-				e3 = _autocast(e3, "float")
-				var e = Expr.new()
-				e.code = str("vec4(", e0.code, ", ", e1.code, ", ", e2.code, ", ", e3.code, ")")
-				e.type = "vec4"
-				expressions = [e]
-			
-			"Separate":
-				var e = _get_input_expression_or_default(node, 0, "vec4")
-				var e0 = Expr.new()
-				var e1 = Expr.new()
-				var e2 = Expr.new()
-				var e3 = Expr.new()
-				e0.code = str(e.code, ".x")
-				e1.code = str(e.code, ".y")
-				e2.code = str(e.code, ".z")
-				e3.code = str(e.code, ".w")
-				e0.type = "float"
-				e1.type = "float"
-				e2.type = "float"
-				e3.type = "float"
-				expressions = [e0, e1, e2, e3]
+		var node = parse_list[node_index]
+		var expressions = _process_node(node)
 		
 		for i in len(node.outputs):
 			if len(node.outputs[i]) > 1:
@@ -161,6 +108,118 @@ func _generate():
 		
 		_expressions[node.id] = expressions
 
+	var rs = RenderStep.new()
+
+	# The last node must be an output of some sort
+	var last_node = parse_list[-1]
+	var last_node_type = NodeDefs.get_type_by_name(last_node.data.type)
+	assert(last_node_type.family in ["output", "composition"])
+
+	if last_node_type.family == "composition":
+		rs.composition = last_node
+	
+	_process_output_node(last_node)
+	
+	rs.shader = _get_full_code()
+	
+	return rs
+
+
+func _process_node(node):
+	var node_type_name = node.data.type
+	#var node_type = NodeDefs.get_type_by_name(node_type_name)
+	
+	var expressions = null
+	
+	match node_type_name:
+		
+		"TextureCoordinates":
+			var e = Expr.new()
+			e.code = "UV"
+			e.type = "vec2"
+			e.composite = false
+			expressions = [e]
+			
+		"Multiply":
+			var a_exp = _get_input_expression_or_default(node, 0, "float")
+			var b_exp = _get_input_expression_or_default(node, 1, "float")
+			var ie = _autocast_pair(a_exp, b_exp)
+			var e = Expr.new()
+			e.code = str(ie[0].get_code_for_op(), " * ", ie[1].get_code_for_op())
+			e.type = ie[0].type
+			expressions = [e]
+		
+		"Sin":
+			var a_exp = _get_input_expression_or_default(node, 0, "float")
+			var e = Expr.new()
+			e.code = str("sin(", a_exp.code, ")")
+			e.type = a_exp.type
+			expressions = [e]
+
+		"GaussianBlur":
+			# TODO mark final
+			# TODO Not correct
+			var e = Expr.new()
+			e.code = "TEXTURE"
+			e.type = "texture"
+			expressions = [e]
+
+		"Output":
+			_process_output_node(node)
+		
+		"Texture":
+			var tex_exp = _get_input_expression(node, 0)
+			if tex_exp != null:
+				var uv_exp = _get_input_expression_or_default(node, 1, "vec2")
+				var e = Expr.new()
+				e.code = str("texture(", tex_exp.code, ", ", uv_exp.code, ")")
+				e.type = "vec4"
+				expressions = [e]
+			else:
+				var e = Expr.new()
+				e.code = _var_to_shader(Color())
+				e.type = "vec4"
+				expressions = [e]
+		
+		"Construct":
+			var e0 = _get_input_expression_or_default(node, 0, "float")
+			var e1 = _get_input_expression_or_default(node, 1, "float")
+			var e2 = _get_input_expression_or_default(node, 2, "float")
+			var e3 = _get_input_expression_or_default(node, 3, "float")
+			e0 = _autocast(e0, "float")
+			e1 = _autocast(e1, "float")
+			e2 = _autocast(e2, "float")
+			e3 = _autocast(e3, "float")
+			var e = Expr.new()
+			e.code = str("vec4(", e0.code, ", ", e1.code, ", ", e2.code, ", ", e3.code, ")")
+			e.type = "vec4"
+			expressions = [e]
+		
+		"Separate":
+			var e = _get_input_expression_or_default(node, 0, "vec4")
+			var e0 = Expr.new()
+			var e1 = Expr.new()
+			var e2 = Expr.new()
+			var e3 = Expr.new()
+			e0.code = str(e.code, ".x")
+			e1.code = str(e.code, ".y")
+			e2.code = str(e.code, ".z")
+			e3.code = str(e.code, ".w")
+			e0.type = "float"
+			e1.type = "float"
+			e2.type = "float"
+			e3.type = "float"
+			expressions = [e0, e1, e2, e3]
+	
+	return expressions
+
+
+func _process_output_node(node):
+	# TODO Handle composition nodes with more than one input
+	var a_exp = _get_input_expression_or_default(node, 0, "vec4")
+	var e = _autocast(a_exp, "vec4") #node_type.inputs[0].type
+	_statements.append(str("COLOR = ", e.code, ";"))
+
 
 func _get_input_default_expression(node, input_index, data_type):
 	
@@ -171,8 +230,10 @@ func _get_input_default_expression(node, input_index, data_type):
 	var v
 	if params.has(input_def.name) and params[input_def.name] != null:
 		v = params[input_def.name]
-	else:
+	elif input_def.has("default"):
 		v = input_def.default
+	else:
+		v = _scalar_type_defaults[data_type]
 		
 	var e = Expr.new()
 	e.code = _var_to_shader(v)
@@ -212,8 +273,8 @@ func _autocast_pair(e1, e2, context=-1):
 	if e1.type == e2.type:
 		return [e1, e2]
 	
-	var e1_dim = _scalar_type_dimension[e1.type]
-	var e2_dim = _scalar_type_dimension[e2.type]
+	var e1_dim = _get_type_dimension(e1.type)
+	var e2_dim = _get_type_dimension(e2.type)
 	
 #	if context == CONTEXT_BINOP and (e1_dim == 1 or e2_dim == 1):
 #		return [e1, e2]
@@ -227,13 +288,28 @@ func _autocast_pair(e1, e2, context=-1):
 	return [e1, e2]
 
 
+static func _get_type_dimension(type):
+	if _scalar_type_dimension.has(type):
+		return _scalar_type_dimension[type]
+	assert(type == "texture")
+	return 4
+
+
 func _autocast(e, dst_type):
+	
+	assert(_is_scalar_type(dst_type))
 	
 	if e.type == dst_type:
 		return e
 	
 	e = e.duplicate()
 	# TODO If an expression isn't primitive, store in a var to avoid repeating it
+	
+	# TODO This is a fallback, normally such things would fail
+	if not _is_scalar_type(e.type):
+		if e.type == "texture":
+			e.code = str("texture(", e.code, ", UV)")
+			e.type = "vec4"
 	
 	var src_dim = _scalar_type_dimension[e.type]
 	var dst_dim = _scalar_type_dimension[dst_type]
@@ -310,3 +386,7 @@ static func _var_to_shader(v, no_alpha=false):
 				_var_to_shader(v.b), ", ", \
 				_var_to_shader(v.a), ")")
 		
+
+static func _is_scalar_type(type):
+	return _scalar_type_dimension.has(type)
+

@@ -239,8 +239,16 @@ func get_output_nodes():
 	return nodes
 
 
-func evaluate():
-	var to_process = get_output_nodes()
+# output_nodes: nodes from which to start evaluation
+# block_predicate: nodes for at evaluation must stop
+func evaluate(output_nodes = null, block_predicate = null) -> Array:
+
+	var to_process
+	if output_nodes == null:
+		to_process = get_output_nodes()
+	else:
+		to_process = output_nodes.duplicate(false)
+	
 	var processed_node_ids = {}
 	var order = []
 	
@@ -248,16 +256,17 @@ func evaluate():
 		var node = to_process[-1]
 		
 		var input_node_ids_to_process = []
-		for slot_index in len(node.inputs):
-			var slot = node.inputs[slot_index]
-			if len(slot) == 0:
-				continue
-			assert(len(slot) == 1)
-			var arc = get_arc(slot[0])
-			if processed_node_ids.has(arc.from_id):
-				continue
-			if not input_node_ids_to_process.has(arc.from_id):
-				input_node_ids_to_process.append(arc.from_id)
+		if (block_predicate == null or not block_predicate.call_func(node)) or output_nodes.has(node):
+			for slot_index in len(node.inputs):
+				var slot = node.inputs[slot_index]
+				if len(slot) == 0:
+					continue
+				assert(len(slot) == 1)
+				var arc = get_arc(slot[0])
+				if processed_node_ids.has(arc.from_id):
+					continue
+				if not input_node_ids_to_process.has(arc.from_id):
+					input_node_ids_to_process.append(arc.from_id)
 		
 		if len(input_node_ids_to_process) == 0:
 			# All inputs got processed, now we can add the current node

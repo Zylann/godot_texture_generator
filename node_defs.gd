@@ -120,6 +120,7 @@ static func check():
 		var type = _node_types[type_name]
 		
 		assert(type.has("family"))
+		assert(_node_families.has(type.family))
 		
 		if type.family == "input":
 			assert(type.has("outputs"))
