@@ -45,8 +45,13 @@ class RenderStep:
 	var shader_code = ""
 	var shader = null
 	var composition = null
-#	var inputs = {}
-#	var outputs = {}
+	# uniform name => texture source
+	var texture_uniforms = {}
+
+
+class TextureSource:
+	var render_step_index = -1
+	var filepath = ""
 
 
 # Read-only graph
@@ -57,6 +62,9 @@ var _statements = []
 
 # node id => [output expressions]
 var _expressions = {}
+
+# input node id => texture uniform index
+var _texture_uniforms = {}
 
 var _next_var_id = 0
 
@@ -75,18 +83,24 @@ func compile():
 #		print("[", node.id, "] ", node.data.type)
 
 	var render_steps = []
+	var node_pass_indexes = {}
 	
 	for parse_list in parse_lists:
-		var rs = _generate_pass(parse_list)
+		var rs = _generate_pass(parse_list, node_pass_indexes)
+		
+		var last_node = parse_list[-1]
+		node_pass_indexes[last_node.id] = len(render_steps)
+		
 		render_steps.append(rs)
 	
 	return render_steps
 
 
-func _generate_pass(parse_list):
+func _generate_pass(parse_list, node_pass_indexes):
 	
 	_expressions.clear()
 	_statements.clear()
+	_texture_uniforms.clear()
 	
 	for node_index in len(parse_list) - 1:
 		
@@ -125,6 +139,12 @@ func _generate_pass(parse_list):
 	rs.shader = Shader.new()
 	rs.shader.code = rs.shader_code
 	
+	for node_id in _texture_uniforms:
+		var uniform_name = _texture_uniforms[node_id]
+		var ts = TextureSource.new()
+		ts.render_step_index = node_pass_indexes[node_id]
+		rs.texture_uniforms[uniform_name] = ts
+	
 	return rs
 
 
@@ -160,10 +180,15 @@ func _process_node(node):
 			expressions = [e]
 
 		"GaussianBlur":
-			# TODO mark final
-			# TODO Not correct
+			# TODO This may eventually be the same code for each compo output
+			var tex_var_name
+			if not _texture_uniforms.has(node.id):
+				tex_var_name = _get_texture_uniform_name(len(_texture_uniforms))
+				_texture_uniforms[node.id] = tex_var_name
+			else:
+				tex_var_name = _texture_uniforms[node.id]
 			var e = Expr.new()
-			e.code = "TEXTURE"
+			e.code = tex_var_name
 			e.type = "texture"
 			expressions = [e]
 
@@ -347,11 +372,20 @@ func _generate_var_name():
 func _get_full_code():
 	var lines = [
 		"shader_type canvas_item;",
-		"void fragment() {",
+		""
 	]
+	
+	if len(_texture_uniforms) > 0:
+		for node_id in _texture_uniforms:
+			var uniform_name = _texture_uniforms[node_id]
+			lines.append(str("uniform sampler2D ", uniform_name, ";"))
+		lines.append("")
+	
+	lines.append("void fragment() {")
 	for statement in _statements:
 		lines.append(str("\t", statement))
 	lines.append("}")
+	lines.append("")
 	
 	return PoolStringArray(lines).join("\n")
 
@@ -392,4 +426,8 @@ static func _var_to_shader(v, no_alpha=false):
 
 static func _is_scalar_type(type):
 	return _scalar_type_dimension.has(type)
+
+
+static func _get_texture_uniform_name(index):
+	return str("u_input_texture_", index)
 

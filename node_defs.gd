@@ -11,7 +11,8 @@ const _node_families = [
 	"operation",
 	
 	# Cannot be done with just a shader,
-	# requires to complete the full image first and then apply the transformation
+	# requires to complete the full image first and then apply the transformation.
+	# Typically spawns an intermediate render.
 	"composition"
 ]
 

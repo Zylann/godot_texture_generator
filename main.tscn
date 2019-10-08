@@ -81,7 +81,6 @@ text = "Status"
 
 [node name="Renderer" type="Node" parent="."]
 script = ExtResource( 4 )
-
 [connection signal="context_menu_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_context_menu_requested"]
 [connection signal="graph_changed" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_graph_changed"]
 [connection signal="progress_notified" from="Renderer" to="." method="_on_Renderer_progress_notified"]
