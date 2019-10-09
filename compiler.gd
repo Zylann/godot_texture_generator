@@ -131,7 +131,8 @@ func _generate_pass(parse_list, node_pass_indexes):
 	assert(last_node_type.family in ["output", "composition"])
 
 	if last_node_type.family == "composition":
-		rs.composition = last_node
+		# TODO This is a deep duplication, however I don't want resources to be duped... careful
+		rs.composition = last_node.data.duplicate(true)
 	
 	_process_output_node(last_node)
 	

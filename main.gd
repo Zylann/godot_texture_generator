@@ -10,6 +10,7 @@ const NodeController = preload("./node_controller.gd")
 onready var _graph_view = get_node("VBoxContainer/MainView/GraphView")
 onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/CodeView/TabContainer")
 onready var _preview = get_node("VBoxContainer/MainView/BottomPanel/Preview")
+onready var _bottom_panel = get_node("VBoxContainer/MainView/BottomPanel")
 onready var _renderer = get_node("Renderer")
 onready var _status_label = get_node("VBoxContainer/StatusBar/Label")
 
@@ -101,7 +102,7 @@ func _display_render_steps_in_debug_panel(render_steps):
 		ed.name = str("Pass", i + 1)
 		var code = rs.shader_code
 		if rs.composition != null:
-			code += str("\n\n// Composition: ", rs.composition.data.type, rs.composition.id)
+			code += str("\n\n// Composition: ", rs.composition.type, i)
 		ed.text = code
 		_codes_tab_container.add_child(ed)
 
@@ -170,3 +171,15 @@ func _on_graph_view_context_menu_item_selected(index, menu, position):
 
 func _on_Renderer_progress_notified(progress):
 	_status_label.text = str("Rendering ", int(progress * 100.0), " %")
+	#_preview.texture = _renderer.get_texture()
+	
+	# TODO Mostly for debugging, won't stay that way
+	for child in _bottom_panel.get_children():
+		if child is TextureRect:
+			child.queue_free()
+	var textures = _renderer.get_textures()
+	for tex in textures:
+		var t = TextureRect.new()
+		t.texture = tex
+		_bottom_panel.add_child(t)
+	

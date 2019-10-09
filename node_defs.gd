@@ -52,7 +52,7 @@ const _node_types = {
 			{"name": "in", "type": "vec4", "default": 0}
 		],
 		"params": [
-			{"name": "r", "type": "int", "default": 1}
+			{"name": "r", "type": "int", "default": 10.0}
 		],
 		"outputs": [
 			{"name": "out", "type": "scalar"}
