@@ -179,6 +179,19 @@ func _process_node(node):
 			e.code = str("sin(", a_exp.code, ")")
 			e.type = a_exp.type
 			expressions = [e]
+		
+		"Wave":
+			var a_exp = _get_input_expression_or_default(node, 0, "float")
+			var offset = _get_param_code(node, "offset")
+			var freq = _get_param_code(node, "frequency")
+			# TODO Wave type: triangle, square, sine, saw
+			var e = Expr.new()
+			# 0.5*cos(o+f*x*TAU+PI)+0.5
+			e.code = str("0.5 + 0.5 * cos(", offset, " + ", freq, " * ", \
+				a_exp.get_code_for_op(), " * ", TAU, " + ", PI, ")")
+			e.type = a_exp.type
+			expressions = [e]
+
 
 		"GaussianBlur":
 			# TODO This may eventually be the same code for each compo output
@@ -248,6 +261,15 @@ func _process_output_node(node):
 	var a_exp = _get_input_expression_or_default(node, 0, "vec4")
 	var e = _autocast(a_exp, "vec4") #node_type.inputs[0].type
 	_statements.append(str("COLOR = ", e.code, ";"))
+
+
+func _get_param_code(node, param_name):
+	var v = node.data.params[param_name]
+	return _var_to_shader(v)
+#	var e = Expr.new()
+#	e.code = _var_to_shader(v)
+#	e.type = _var_to_type(v)
+#	return e
 
 
 func _get_input_default_expression(node, input_index, data_type):
@@ -423,6 +445,23 @@ static func _var_to_shader(v, no_alpha=false):
 				_var_to_shader(v.g), ", ", \
 				_var_to_shader(v.b), ", ", \
 				_var_to_shader(v.a), ")")
+
+
+#static func _var_to_type(v):
+#	match typeof(v):
+#		TYPE_REAL:
+#			return "float"
+#		TYPE_INT:
+#			return "int"
+#		TYPE_VECTOR2:
+#			return "vec2"
+#		TYPE_VECTOR3:
+#			return "vec3"
+#		TYPE_COLOR:
+#			return "vec4"
+#		TYPE_OBJECT:
+#			if v is Texture:
+#				return "sampler2D"
 		
 
 static func _is_scalar_type(type):

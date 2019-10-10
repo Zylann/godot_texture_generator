@@ -45,6 +45,20 @@ const _node_types = {
 			{"name": "out", "type": "scalar"}
 		]
 	},
+	"Wave": {
+		"family": "operation",
+		"category": "Shapes",
+		"inputs": [
+			{"name": "in", "type": "scalar", "default": 0}
+		],
+		"params": [
+			{"name": "frequency", "type": "float", "default": 10.0},
+			{"name": "offset", "type": "float", "default": 0.0}
+		],
+		"outputs": [
+			{"name": "out", "type": "scalar"}
+		]
+	},
 	"GaussianBlur": {
 		"family": "composition",
 		"category": "Effects",
