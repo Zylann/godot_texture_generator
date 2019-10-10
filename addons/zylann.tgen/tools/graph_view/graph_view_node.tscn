@@ -1,7 +1,9 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://node_stylebox.tres" type="StyleBox" id=1]
-[ext_resource path="res://graph_view_node.gd" type="Script" id=2]
+[ext_resource path="res://addons/zylann.tgen/tools/graph_view/node_stylebox.tres" type="StyleBox" id=1]
+[ext_resource path="res://addons/zylann.tgen/tools/graph_view/graph_view_node.gd" type="Script" id=2]
+
+
 
 [node name="GraphViewNode" type="Panel"]
 margin_right = 148.0

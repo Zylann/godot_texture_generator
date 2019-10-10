@@ -1,9 +1,9 @@
 extends Control
 
 
-const NodeDefs = preload("./node_defs.gd")
-const Compiler = preload("./compiler.gd")
-const DAG = preload("./graph.gd")
+const NodeDefs = preload("./../node_defs.gd")
+const Compiler = preload("./../compiler.gd")
+const DAG = preload("./../util/graph.gd")
 const CodeFont = preload("./fonts/hack_regular.tres")
 const NodeController = preload("./node_controller.gd")
 
@@ -182,4 +182,3 @@ func _on_Renderer_progress_notified(progress):
 		var t = TextureRect.new()
 		t.texture = tex
 		_bottom_panel.add_child(t)
-	

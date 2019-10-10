@@ -9,8 +9,8 @@ extends Control
 const NodeScene = preload("./graph_view_node.tscn")
 const GraphViewNode = preload("./graph_view_node.gd")
 const NodeItem = preload("./graph_view_node_item.gd")
-const DAG = preload("./graph.gd")
-const Util = preload("./util.gd")
+const DAG = preload("./../../util/graph.gd")
+const Util = preload("./../../util/util.gd")
 
 signal graph_changed
 signal context_menu_requested(position)

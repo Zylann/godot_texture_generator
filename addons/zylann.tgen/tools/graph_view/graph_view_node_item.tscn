@@ -1,8 +1,11 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://graph_view_node_item.gd" type="Script" id=1]
-[ext_resource path="res://slot_left_stylebox.tres" type="StyleBox" id=2]
-[ext_resource path="res://slot_right_stylebox.tres" type="StyleBox" id=3]
+[ext_resource path="res://addons/zylann.tgen/tools/graph_view/graph_view_node_item.gd" type="Script" id=1]
+[ext_resource path="res://addons/zylann.tgen/tools/graph_view/slot_left_stylebox.tres" type="StyleBox" id=2]
+[ext_resource path="res://addons/zylann.tgen/tools/graph_view/slot_right_stylebox.tres" type="StyleBox" id=3]
+
+
+
 
 [node name="GraphViewNodeItem" type="HBoxContainer"]
 anchor_right = 1.0

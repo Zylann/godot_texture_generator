@@ -1,9 +1,9 @@
 extends Node
 
-const NodeDefs = preload("./node_defs.gd")
-const NodeItem = preload("./graph_view_node_item.gd")
-const GraphView = preload("./graph_view.gd")
-const Util = preload("./util.gd")
+const NodeDefs = preload("./../node_defs.gd")
+const NodeItem = preload("./graph_view/graph_view_node_item.gd")
+const GraphView = preload("./graph_view/graph_view.gd")
+const Util = preload("./../util/util.gd")
 
 signal param_changed
 
