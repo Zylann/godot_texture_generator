@@ -5,7 +5,7 @@
 
 extends Node
 
-const BlurShader = preload("./blur.shader")
+const NodeDefs = preload("./node_defs.gd")
 
 class ViewportInfo:
 	var viewport = null
@@ -13,6 +13,15 @@ class ViewportInfo:
 	var post_process_sprite = null
 
 signal progress_notified(progress)
+
+
+class _RendererNodeContext:
+	var iteration = 0
+	var material = null
+	var composition = null
+	
+	func get_param(param_name):
+		return composition.params[param_name]
 
 
 var _render_steps = []
@@ -178,32 +187,22 @@ func _process_composition():
 	if rs.composition == null:
 		return finished
 	
-	var p = rs.composition.params
+	var type_name = rs.composition.type
+	var type = NodeDefs.get_type_by_name(type_name)
+	
 	var vi = _viewports[_current_step_index]
+
+	var context = _RendererNodeContext.new()
+	context.iteration = _iteration
+	context.composition = rs.composition
+	context.material = vi.post_process_sprite.material
+	
+	if type_name == "Pass":
+		finished - true
+	else:
+		finished = type.process_composition(context)
 		
-	match rs.composition.type:
-		
-		"Pass":
-			finished = true
-		
-		"GaussianBlur":
-			var mat = vi.post_process_sprite.material
-			
-			if _iteration == 0:
-				mat.shader = BlurShader
-				mat.set_shader_param("u_orientation", 0.0)
-				mat.set_shader_param("u_amount", p.r)
-				finished = false
-				
-			elif _iteration == 1:
-				mat.set_shader_param("u_orientation", 1.0)
-				finished = false
-		
-		"Erode":
-			# TODO
-			pass
-		
-		# TODO Regular drawings?
+	# TODO Regular drawings?
 	
 	if not finished:
 		vi.sprite.visible = (_iteration < 1)

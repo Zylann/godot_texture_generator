@@ -52,7 +52,7 @@ class TextureSource:
 	var filepath = ""
 
 
-class NodeCompilerContext:
+class _NodeCompilerContext:
 	
 	var node
 	var _compiler
@@ -65,16 +65,25 @@ class NodeCompilerContext:
 		e.code = code
 		e.type = type
 		return e
+
+	func get_input_expression(index):
+		return _compiler._get_input_expression(node, index)
 	
 	func get_input_expression_or_default(index, data_type):
 		return _compiler._get_input_expression_or_default(node, index, data_type)
+
+	func get_param_code(param_name):
+		return _compiler._get_param_code(node, param_name)
 
 	func autocast_pair(a, b):
 		return _compiler._autocast_pair(a, b)
 
 	func autocast(a, dst_type):
 		return _compiler._autocast(a, dst_type)
-
+	
+	func var_to_shader(v):
+		return _compiler._var_to_shader(v)
+	
 
 # Read-only graph
 var _graph = null
@@ -173,107 +182,30 @@ func _generate_pass(parse_list, node_pass_indexes):
 
 func _process_node(node):
 	var node_type_name = node.data.type
-	#var node_type = NodeDefs.get_type_by_name(node_type_name)
+	var node_type = NodeDefs.get_type_by_name(node_type_name)
 	
-	var expressions = null
-	var context = NodeCompilerContext.new(self)
+	if node_type.family == "composition":
+		# TODO This may eventually be the same code for each compo output
+		var tex_var_name
+		var texture_uniforms = _texture_uniforms
+		if not texture_uniforms.has(node.id):
+			tex_var_name = _get_texture_uniform_name(len(texture_uniforms))
+			texture_uniforms[node.id] = tex_var_name
+		else:
+			tex_var_name = texture_uniforms[node.id]
+		var e = Expr.new()
+		e.code = tex_var_name
+		e.type = "texture"
+		return [e]
+	
+	elif node_type_name == "Output":
+		_process_output_node(node)
+		return null
+	
+	var context = _NodeCompilerContext.new(self)
 	context.node = node
 	
-	match node_type_name:
-		
-		"Sin":
-			var a_exp = _get_input_expression_or_default(node, 0, "float")
-			var e = Expr.new()
-			e.code = str("sin(", a_exp.code, ")")
-			e.type = a_exp.type
-			expressions = [e]
-		
-		"Wave":
-			var a_exp = _get_input_expression_or_default(node, 0, "float")
-			var offset = _get_param_code(node, "offset")
-			var freq = _get_param_code(node, "frequency")
-			# TODO Wave type: triangle, square, sine, saw
-			var e = Expr.new()
-			# 0.5*cos(o+f*x*TAU+PI)+0.5
-			e.code = str("0.5 + 0.5 * cos(", offset, " + ", freq, " * ", \
-				a_exp.get_code_for_op(), " * ", TAU, " + ", PI, ")")
-			e.type = a_exp.type
-			expressions = [e]
-
-		"Clamp":
-			var a_exp = _get_input_expression_or_default(node, 0, "float")
-			var minv = _get_param_code(node, "min")
-			var maxv = _get_param_code(node, "max")
-			var e = Expr.new()
-			e.code = str("clamp(", a_exp.code, ", ", minv, ", ", maxv, ")")
-			e.type = a_exp.type
-			expressions = [e]
-
-		"GaussianBlur":
-			# TODO This may eventually be the same code for each compo output
-			var tex_var_name
-			if not _texture_uniforms.has(node.id):
-				tex_var_name = _get_texture_uniform_name(len(_texture_uniforms))
-				_texture_uniforms[node.id] = tex_var_name
-			else:
-				tex_var_name = _texture_uniforms[node.id]
-			var e = Expr.new()
-			e.code = tex_var_name
-			e.type = "texture"
-			expressions = [e]
-
-		"Output":
-			_process_output_node(node)
-		
-		"Texture":
-			var tex_exp = _get_input_expression(node, 0)
-			if tex_exp != null:
-				var uv_exp = _get_input_expression_or_default(node, 1, "vec2")
-				var e = Expr.new()
-				e.code = str("texture(", tex_exp.code, ", ", uv_exp.code, ")")
-				e.type = "vec4"
-				expressions = [e]
-			else:
-				var e = Expr.new()
-				e.code = _var_to_shader(Color())
-				e.type = "vec4"
-				expressions = [e]
-		
-		"Construct":
-			var e0 = _get_input_expression_or_default(node, 0, "float")
-			var e1 = _get_input_expression_or_default(node, 1, "float")
-			var e2 = _get_input_expression_or_default(node, 2, "float")
-			var e3 = _get_input_expression_or_default(node, 3, "float")
-			e0 = _autocast(e0, "float")
-			e1 = _autocast(e1, "float")
-			e2 = _autocast(e2, "float")
-			e3 = _autocast(e3, "float")
-			var e = Expr.new()
-			e.code = str("vec4(", e0.code, ", ", e1.code, ", ", e2.code, ", ", e3.code, ")")
-			e.type = "vec4"
-			expressions = [e]
-		
-		"Separate":
-			var e = _get_input_expression_or_default(node, 0, "vec4")
-			var e0 = Expr.new()
-			var e1 = Expr.new()
-			var e2 = Expr.new()
-			var e3 = Expr.new()
-			e0.code = str(e.code, ".x")
-			e1.code = str(e.code, ".y")
-			e2.code = str(e.code, ".z")
-			e3.code = str(e.code, ".w")
-			e0.type = "float"
-			e1.type = "float"
-			e2.type = "float"
-			e3.type = "float"
-			expressions = [e0, e1, e2, e3]
-		
-		_:
-			var type = NodeDefs.get_type_by_name(node_type_name)
-			expressions = type.compile(context)
-	
-	return expressions
+	return node_type.compile(context)
 
 
 func _process_output_node(node):
