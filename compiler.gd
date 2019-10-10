@@ -192,6 +192,14 @@ func _process_node(node):
 			e.type = a_exp.type
 			expressions = [e]
 
+		"Clamp":
+			var a_exp = _get_input_expression_or_default(node, 0, "float")
+			var minv = _get_param_code(node, "min")
+			var maxv = _get_param_code(node, "max")
+			var e = Expr.new()
+			e.code = str("clamp(", a_exp.code, ", ", minv, ", ", maxv, ")")
+			e.type = a_exp.type
+			expressions = [e]
 
 		"GaussianBlur":
 			# TODO This may eventually be the same code for each compo output

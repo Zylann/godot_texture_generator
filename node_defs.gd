@@ -59,6 +59,20 @@ const _node_types = {
 			{"name": "out", "type": "scalar"}
 		]
 	},
+	"Clamp": {
+		"family": "operation",
+		"category": "Math",
+		"inputs": [
+			{"name": "in", "type": "scalar", "default": 0}
+		],
+		"params": [
+			{"name": "min", "type": "float", "default": 0.0},
+			{"name": "max", "type": "float", "default": 1.0}
+		],
+		"outputs": [
+			{"name": "out", "type": "scalar"}
+		]
+	},
 	"GaussianBlur": {
 		"family": "composition",
 		"category": "Effects",
