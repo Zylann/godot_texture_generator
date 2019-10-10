@@ -2,8 +2,6 @@
 const NodeDefs = preload("./node_defs.gd")
 const GraphEvaluator = preload("./compiler_graph_evaluator.gd")
 
-#const CONTEXT_BINOP = 1
-
 const _scalar_type_dimension = {
 	"float": 1,
 	"vec2": 2,
@@ -52,6 +50,30 @@ class RenderStep:
 class TextureSource:
 	var render_step_index = -1
 	var filepath = ""
+
+
+class NodeCompilerContext:
+	
+	var node
+	var _compiler
+	
+	func _init(compiler):
+		_compiler = compiler
+	
+	func create_expression(code, type):
+		var e = Expr.new()
+		e.code = code
+		e.type = type
+		return e
+	
+	func get_input_expression_or_default(index, data_type):
+		return _compiler._get_input_expression_or_default(node, index, data_type)
+
+	func autocast_pair(a, b):
+		return _compiler._autocast_pair(a, b)
+
+	func autocast(a, dst_type):
+		return _compiler._autocast(a, dst_type)
 
 
 # Read-only graph
@@ -154,24 +176,10 @@ func _process_node(node):
 	#var node_type = NodeDefs.get_type_by_name(node_type_name)
 	
 	var expressions = null
+	var context = NodeCompilerContext.new(self)
+	context.node = node
 	
 	match node_type_name:
-		
-		"TextureCoordinates":
-			var e = Expr.new()
-			e.code = "UV"
-			e.type = "vec2"
-			e.composite = false
-			expressions = [e]
-			
-		"Multiply":
-			var a_exp = _get_input_expression_or_default(node, 0, "float")
-			var b_exp = _get_input_expression_or_default(node, 1, "float")
-			var ie = _autocast_pair(a_exp, b_exp)
-			var e = Expr.new()
-			e.code = str(ie[0].get_code_for_op(), " * ", ie[1].get_code_for_op())
-			e.type = ie[0].type
-			expressions = [e]
 		
 		"Sin":
 			var a_exp = _get_input_expression_or_default(node, 0, "float")
@@ -260,6 +268,10 @@ func _process_node(node):
 			e2.type = "float"
 			e3.type = "float"
 			expressions = [e0, e1, e2, e3]
+		
+		_:
+			var type = NodeDefs.get_type_by_name(node_type_name)
+			expressions = type.compile(context)
 	
 	return expressions
 
@@ -327,17 +339,14 @@ func _get_input_expression_or_default(node, input_index, data_type):
 	return e
 
 
-func _autocast_pair(e1, e2, context=-1):
+func _autocast_pair(e1, e2):
 	
 	if e1.type == e2.type:
 		return [e1, e2]
 	
 	var e1_dim = _get_type_dimension(e1.type)
 	var e2_dim = _get_type_dimension(e2.type)
-	
-#	if context == CONTEXT_BINOP and (e1_dim == 1 or e2_dim == 1):
-#		return [e1, e2]
-	
+		
 	# The type of larger dimension wins
 	if e1_dim < e2_dim:
 		e1 = _autocast(e1, e2.type)

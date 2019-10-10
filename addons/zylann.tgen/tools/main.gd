@@ -33,21 +33,18 @@ static func create_graph_node(type_name):
 		"rect": Rect2()
 	}
 
-	if type.has("inputs"):
-		for i in len(type.inputs):
-			node.inputs.append([])
+	for i in len(type.inputs):
+		node.inputs.append([])
 
-	if type.has("outputs"):
-		for i in len(type.outputs):
-			node.outputs.append([])
+	for i in len(type.outputs):
+		node.outputs.append([])
 
-	if type.has("params"):
-		for i in len(type.params):
-			var p = type.params[i]
-			var v = null
-			if p.has("default"):
-				v = p.default
-			node.data.params[p.name] = v
+	for i in len(type.params):
+		var p = type.params[i]
+		var v = null
+		if p.has("default"):
+			v = p.default
+		node.data.params[p.name] = v
 
 	return node
 
@@ -119,7 +116,8 @@ func _on_GraphView_context_menu_requested(position):
 	var types_by_name = NodeDefs.get_node_types()
 	for type_name in types_by_name:
 		var type = types_by_name[type_name]
-		if type.has("category"):
+		if type.category != "":
+			assert(typeof(type.category) == TYPE_STRING)
 			var found = false
 			for m in model:
 				if m is Dictionary and m.category == type.category:

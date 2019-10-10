@@ -27,22 +27,19 @@ func setup_for_node_type(type_name):
 	var type = NodeDefs.get_type_by_name(type_name)
 	var view = _get_view()
 
-	if type.has("outputs"):
-		for i in len(type.outputs):
-			var p = type.outputs[i]
-			var item = view.add_item(NodeItem.MODE_OUTPUT, p.name)
+	for i in len(type.outputs):
+		var p = type.outputs[i]
+		var item = view.add_item(NodeItem.MODE_OUTPUT, p.name)
 	
-	if type.has("params"):
-		for i in len(type.params):
-			var p = type.params[i]
-			var item = view.add_item(NodeItem.MODE_PARAM, p.name)
-			_setup_item(item, p)
+	for i in len(type.params):
+		var p = type.params[i]
+		var item = view.add_item(NodeItem.MODE_PARAM, p.name)
+		_setup_item(item, p)
 
-	if type.has("inputs"):
-		for i in len(type.inputs):
-			var p = type.inputs[i]
-			var item = view.add_item(NodeItem.MODE_INPUT, p.name)
-			_setup_item(item, p)
+	for i in len(type.inputs):
+		var p = type.inputs[i]
+		var item = view.add_item(NodeItem.MODE_INPUT, p.name)
+		_setup_item(item, p)
 
 
 func _setup_item(item, param_def):

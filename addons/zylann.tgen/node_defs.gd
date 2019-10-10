@@ -17,30 +17,17 @@ const _node_families = [
 ]
 
 const _node_types = {
-	"TextureCoordinates": {
-		"family": "input",
-		"category": "Input",
-		"outputs": [
-			{"name": "uv", "type": "vec2"}
-		],
-	},
-	"Multiply": {
-		"family": "operation",
-		"category": "Math",
-		"inputs": [
-			{"name": "a", "type": "scalar", "default": 1},
-			{"name": "b", "type": "scalar", "default": 1}
-		],
-		"outputs": [
-			{"name": "out", "type": "scalar"}
-		]
-	},
+	
+	"TextureCoordinates": preload("./nodes/texture_coordinates.gd"),
+	"Multiply": preload("./nodes/multiply.gd"),
+	
 	"Sin": {
 		"family": "operation",
 		"category": "Math",
 		"inputs": [
 			{"name": "in", "type": "scalar", "default": 0}
 		],
+		"params": [],
 		"outputs": [
 			{"name": "out", "type": "scalar"}
 		]
@@ -91,7 +78,9 @@ const _node_types = {
 		"category": "Output",
 		"inputs": [
 			{"name": "color", "type": "color", "default": Color(0,0,0,1)}
-		]
+		],
+		"params": [],
+		"outputs": []
 	},
 	"Texture": {
 		"family": "operation",
@@ -116,6 +105,7 @@ const _node_types = {
 			{"name": "z", "type": "float", "default": 0.0},
 			{"name": "w", "type": "float", "default": 1.0}
 		],
+		"params": [],
 		"outputs": [
 			{"name": "v", "type": "vec4"}
 		]
@@ -126,6 +116,7 @@ const _node_types = {
 		"inputs": [
 			{"name": "v", "type": "vec4"}
 		],
+		"params": [],
 		"outputs": [
 			{"name": "x", "type": "float"},
 			{"name": "y", "type": "float"},
@@ -148,20 +139,18 @@ static func check():
 	for type_name in _node_types:
 		var type = _node_types[type_name]
 		
-		assert(type.has("family"))
 		assert(_node_families.has(type.family))
+		assert(typeof(type.category) == TYPE_STRING)
+		assert(typeof(type.family) == TYPE_STRING)
+		assert(typeof(type.params) == TYPE_ARRAY)
 		
 		if type.family == "input":
-			assert(type.has("outputs"))
 			assert(len(type.outputs) > 0)
 			
 		elif type.family == "output":
-			assert(type.has("inputs"))
 			assert(len(type.inputs) > 0)
 		
 		else:
-			assert(type.has("inputs"))
-			assert(type.has("outputs"))
 			assert(len(type.inputs) > 0)
 			assert(len(type.outputs) > 0)
 		
