@@ -47,9 +47,12 @@ func setup_for_node_type(type_name):
 
 func _setup_item(item, param_def):
 	match param_def.type:
-		"scalar", "float":
+		"scalar", "float", "int":
 			var ed = SpinBox.new()
-			ed.step = 0.001
+			if param_def.type == "int":
+				ed.step = 1
+			else:
+				ed.step = 0.001
 			ed.min_value = -1000
 			ed.max_value = 1000
 			if param_def.has("default"):
