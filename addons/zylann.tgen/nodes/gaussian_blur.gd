@@ -17,15 +17,12 @@ const outputs = [
 ]
 
 static func process_composition(ctx):
-	var mat = ctx.material
 	
 	if ctx.iteration == 0:
+		var mat = ctx.material
 		mat.shader = BlurShader
 		mat.set_shader_param("u_radius", ctx.get_param("amount"))
 		return false
-	
-	elif ctx.iteration == 1:
-		return false
-	
+		
 	return true
 
