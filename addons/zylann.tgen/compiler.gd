@@ -142,14 +142,17 @@ func _generate_pass(parse_list, node_pass_indexes):
 			if len(node.outputs[i]) > 1:
 				var prev_exp = expressions[i]
 				if prev_exp.composite:
+					
 					# Complex output used by more than one node,
 					# store result in a var to avoid redoing the same calculation
 					var var_name = _generate_var_name()
 					_statements.append(str(prev_exp.type, " ", var_name, " = ", prev_exp.code, ";"))
+					
 					var ve = Expr.new()
 					ve.code = var_name
 					ve.type = prev_exp.type
 					ve.composite = false
+					
 					expressions[i] = ve
 		
 		_expressions[node.id] = expressions
@@ -194,8 +197,10 @@ func _process_node(node):
 		else:
 			tex_var_name = texture_uniforms[node.id]
 		var e = Expr.new()
+		# The output is straight the sampler name
 		e.code = tex_var_name
 		e.type = "texture"
+		e.composite = false
 		return [e]
 	
 	elif node_type_name == "Output":
@@ -271,8 +276,25 @@ func _get_input_expression_or_default(node, input_index, data_type):
 	return e
 
 
+func _to_scalar(e):
+	if _is_scalar_type(e.type):
+		return e
+	if e.type == "texture":
+		# Automatic sampling using default UV.
+		# Custom UVs requires to manually have a TextureCoordinates node.
+		e.type = "vec4"
+		e.code = str("texture(", e.code, ", UV)")
+	else:
+		printerr("_to_scalar called with non-convertible type")
+	return e
+
+
 func _autocast_pair(e1, e2):
 	
+	# A binop with two variables must be scalar
+	e1 = _to_scalar(e1)
+	e2 = _to_scalar(e2)
+
 	if e1.type == e2.type:
 		return [e1, e2]
 	
@@ -297,6 +319,7 @@ static func _get_type_dimension(type):
 
 func _autocast(e, dst_type):
 	
+	# Cannot cast to something not scalar
 	assert(_is_scalar_type(dst_type))
 	
 	if e.type == dst_type:
@@ -305,11 +328,7 @@ func _autocast(e, dst_type):
 	e = e.duplicate()
 	# TODO If an expression isn't primitive, store in a var to avoid repeating it
 	
-	# TODO This is a fallback, normally such things would fail
-	if not _is_scalar_type(e.type):
-		if e.type == "texture":
-			e.code = str("texture(", e.code, ", UV)")
-			e.type = "vec4"
+	e = _to_scalar(e)
 	
 	var src_dim = _scalar_type_dimension[e.type]
 	var dst_dim = _scalar_type_dimension[dst_type]
