@@ -6,14 +6,16 @@ const _scalar_type_dimension = {
 	"float": 1,
 	"vec2": 2,
 	"vec3": 3,
-	"vec4": 4
+	"vec4": 4,
+	"int": 1
 }
 
 const _scalar_type_defaults = {
 	"float": 0.0,
 	"vec2": Vector2(),
 	"vec3": Vector3(),
-	"vec4": Color()
+	"vec4": Color(),
+	"int": 0
 }
 
 const _scalar_type_members = "xyzw"
