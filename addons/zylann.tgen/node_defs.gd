@@ -24,6 +24,7 @@ const _node_types = {
 	"Sin": preload("./nodes/sin.gd"),
 	"Wave": preload("./nodes/wave.gd"),
 	"GaussianBlur": preload("./nodes/gaussian_blur.gd"),
+	"DirectionalBlur": preload("./nodes/directional_blur.gd"),
 	"Clamp": preload("./nodes/clamp.gd"),
 	"Texture": preload("./nodes/texture.gd"),
 	"Construct": preload("./nodes/construct.gd"),
