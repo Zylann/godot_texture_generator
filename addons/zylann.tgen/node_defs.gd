@@ -34,6 +34,7 @@ const _node_types = {
 	# Compositions
 	"GaussianBlur": preload("./nodes/gaussian_blur.gd"),
 	"DirectionalBlur": preload("./nodes/directional_blur.gd"),
+	"BumpToNormal": preload("./nodes/bump_to_normal.gd"),
 
 	# Outputs
 	"Output": {
