@@ -1,5 +1,5 @@
 
-const BlurShader = preload("./../directional_blur.shader")
+const BlurShader = preload("./../shaders/directional_blur.shader")
 
 const family = "composition"
 const category = "Effects"

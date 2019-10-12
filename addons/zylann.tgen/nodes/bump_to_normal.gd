@@ -1,5 +1,5 @@
 
-const BumpToNormalShader = preload("./../bump_to_normal.shader")
+const BumpToNormalShader = preload("./../shaders/bump_to_normal.shader")
 
 const family = "composition"
 const category = "Effects"

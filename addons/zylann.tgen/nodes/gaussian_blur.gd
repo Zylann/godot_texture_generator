@@ -1,5 +1,5 @@
 
-const BlurShader = preload("./../gaussian_blur.shader")
+const BlurShader = preload("./../shaders/gaussian_blur.shader")
 
 const family = "composition"
 const category = "Effects"

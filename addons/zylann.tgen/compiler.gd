@@ -135,7 +135,8 @@ var _internal_texture_dir = ""
 
 func _init(graph):
 	_graph = graph
-	_internal_texture_dir = get_script().resource_path.get_base_dir()
+	_internal_texture_dir = \
+		get_script().resource_path.get_base_dir().plus_file("textures")
 
 
 func compile():
