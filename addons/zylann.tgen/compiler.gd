@@ -359,8 +359,15 @@ func _autocast_pair(e1, e2):
 	# The type of larger dimension wins
 	if e1_dim < e2_dim:
 		e1 = _autocast(e1, e2.type)
-	else:
+	elif e2_dim > e1_dim:
 		e2 = _autocast(e2, e1.type)
+	else:
+		if e1.type == "int":
+			e1 = _autocast(e1, e2.type)
+		elif e2.type == "int":
+			e2 = _autocast(e2, e1.type)
+		else:
+			e2 = _autocast(e2, e1.type)
 	
 	return [e1, e2]
 

@@ -3,8 +3,8 @@ const family = "operation"
 const category = "Math"
 
 const inputs = [
-	{"name": "a", "type": "scalar", "default": 1},
-	{"name": "b", "type": "scalar", "default": 1}
+	{"name": "a", "type": "scalar", "default": 1.0},
+	{"name": "b", "type": "scalar", "default": 1.0}
 ]
 
 const params = []
