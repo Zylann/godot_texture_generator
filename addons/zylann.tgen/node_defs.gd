@@ -18,18 +18,24 @@ const _node_families = [
 
 const _node_types = {
 	
+	# Inputs
 	"TextureCoordinates": preload("./nodes/texture_coordinates.gd"),
 	
+	# Operations
 	"Multiply": preload("./nodes/multiply.gd"),
 	"Sin": preload("./nodes/sin.gd"),
 	"Wave": preload("./nodes/wave.gd"),
-	"GaussianBlur": preload("./nodes/gaussian_blur.gd"),
-	"DirectionalBlur": preload("./nodes/directional_blur.gd"),
 	"Clamp": preload("./nodes/clamp.gd"),
 	"Texture": preload("./nodes/texture.gd"),
 	"Construct": preload("./nodes/construct.gd"),
 	"Separate": preload("./nodes/separate.gd"),
+	"PerlinNoise": preload("./nodes/perlin_noise.gd"),
 
+	# Compositions
+	"GaussianBlur": preload("./nodes/gaussian_blur.gd"),
+	"DirectionalBlur": preload("./nodes/directional_blur.gd"),
+
+	# Outputs
 	"Output": {
 		"family": "output",
 		"category": "Output",

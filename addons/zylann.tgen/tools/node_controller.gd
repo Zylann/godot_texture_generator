@@ -54,7 +54,10 @@ func _setup_item(item, param_def):
 			ed.max_value = 1000
 			if param_def.has("default"):
 				ed.value = param_def.default
-			ed.connect("value_changed", self, "_on_param_modified", [param_def.name])
+			if param_def.type == "int":
+				ed.connect("value_changed", self, "_on_int_param_modified", [param_def.name])
+			else:
+				ed.connect("value_changed", self, "_on_param_modified", [param_def.name])
 			item.set_control(ed)
 		"color":
 			var ed = ColorPickerButton.new()
@@ -63,6 +66,10 @@ func _setup_item(item, param_def):
 		# TODO Image
 		# TODO Gradient
 		# TODO Curve
+
+
+func _on_int_param_modified(new_value_f, param_name):
+	_on_param_modified(int(new_value_f), param_name)
 
 
 func _on_param_modified(new_value, param_name):

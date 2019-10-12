@@ -50,17 +50,29 @@ class RenderStep:
 
 
 class TextureSource:
+	var uniform_name = ""
+	var composition_node_id = -1
 	var render_step_index = -1
-	var filepath = ""
+	var file_path = ""
+	
+#	func duplicate():
+#		var ts = get_script().new()
+#		ts.uniform_name = uniform_name
+#		ts.composition_node_id = composition_node_id
+#		ts.render_step_index = render_step_index
+#		ts.file_path = file_path
+#		return ts
 
 
 class _NodeCompilerContext:
 	
 	var node
 	var _compiler
+	var _internal_texture_dir = ""
 	
-	func _init(compiler):
+	func _init(compiler, internal_tex_dir):
 		_compiler = compiler
+		_internal_texture_dir = internal_tex_dir
 	
 	func create_expression(code, type):
 		var e = Expr.new()
@@ -86,6 +98,23 @@ class _NodeCompilerContext:
 	func var_to_shader(v):
 		return _compiler._var_to_shader(v)
 	
+	func require_function(fname, code):
+		_compiler._require_function(fname, code)
+	
+	func require_texture_from_file(fpath):
+		var ts = _compiler._require_texture_from_file(fpath)
+		return ts.uniform_name
+
+	func require_texture_from_internal(fname):
+		var fpath = _internal_texture_dir.plus_file(fname)
+		var ts = _compiler._require_texture_from_file(fpath)
+		return ts.uniform_name
+
+
+class _Function:
+	var name = ""
+	var code = ""
+
 
 # Read-only graph
 var _graph = null
@@ -96,14 +125,17 @@ var _statements = []
 # node id => [output expressions]
 var _expressions = {}
 
-# input node id => texture uniform index
-var _texture_uniforms = {}
+var _texture_uniforms = []
+
+var _functions = []
 
 var _next_var_id = 0
+var _internal_texture_dir = ""
 
 
 func _init(graph):
 	_graph = graph
+	_internal_texture_dir = get_script().resource_path.get_base_dir()
 
 
 func compile():
@@ -148,7 +180,8 @@ func _generate_pass(parse_list, node_pass_indexes):
 					# Complex output used by more than one node,
 					# store result in a var to avoid redoing the same calculation
 					var var_name = _generate_var_name()
-					_statements.append(str(prev_exp.type, " ", var_name, " = ", prev_exp.code, ";"))
+					_statements.append( \
+						str(prev_exp.type, " ", var_name, " = ", prev_exp.code, ";"))
 					
 					var ve = Expr.new()
 					ve.code = var_name
@@ -167,7 +200,8 @@ func _generate_pass(parse_list, node_pass_indexes):
 	assert(last_node_type.family in ["output", "composition"])
 
 	if last_node_type.family == "composition":
-		# TODO This is a deep duplication, however I don't want resources to be duped... careful
+		# TODO This is a deep duplication, 
+		# however I don't want resources to be duped... careful
 		rs.composition = last_node.data.duplicate(true)
 	
 	_process_output_node(last_node)
@@ -176,13 +210,34 @@ func _generate_pass(parse_list, node_pass_indexes):
 	rs.shader = Shader.new()
 	rs.shader.code = rs.shader_code
 	
-	for node_id in _texture_uniforms:
-		var uniform_name = _texture_uniforms[node_id]
-		var ts = TextureSource.new()
-		ts.render_step_index = node_pass_indexes[node_id]
-		rs.texture_uniforms[uniform_name] = ts
+	for ts in _texture_uniforms:
+		if ts.composition_node_id != -1:
+			ts.render_step_index = node_pass_indexes[ts.composition_node_id]
+		rs.texture_uniforms[ts.uniform_name] = ts
 	
 	return rs
+
+
+func _require_texture_from_node_output(node_id):
+	for ts in _texture_uniforms:
+		if ts.composition_node_id == node_id:
+			return ts
+	var ts = TextureSource.new()
+	ts.composition_node_id = node_id
+	ts.uniform_name = _get_texture_uniform_name(len(_texture_uniforms))
+	_texture_uniforms.append(ts)
+	return ts
+
+
+func _require_texture_from_file(texture_path):
+	for ts in _texture_uniforms:
+		if ts.file_path == texture_path:
+			return ts
+	var ts = TextureSource.new()
+	ts.file_path = texture_path
+	ts.uniform_name = _get_texture_uniform_name(len(_texture_uniforms))
+	_texture_uniforms.append(ts)
+	return ts
 
 
 func _process_node(node):
@@ -191,16 +246,10 @@ func _process_node(node):
 	
 	if node_type.family == "composition":
 		# TODO This may eventually be the same code for each compo output
-		var tex_var_name
-		var texture_uniforms = _texture_uniforms
-		if not texture_uniforms.has(node.id):
-			tex_var_name = _get_texture_uniform_name(len(texture_uniforms))
-			texture_uniforms[node.id] = tex_var_name
-		else:
-			tex_var_name = texture_uniforms[node.id]
+		var ts = _require_texture_from_node_output(node.id)
 		var e = Expr.new()
 		# The output is straight the sampler name
-		e.code = tex_var_name
+		e.code = ts.uniform_name
 		e.type = "texture"
 		e.composite = false
 		return [e]
@@ -209,7 +258,7 @@ func _process_node(node):
 		_process_output_node(node)
 		return null
 	
-	var context = _NodeCompilerContext.new(self)
+	var context = _NodeCompilerContext.new(self,_internal_texture_dir)
 	context.node = node
 	
 	return node_type.compile(context)
@@ -243,10 +292,14 @@ func _get_input_default_expression(node, input_index, data_type):
 	elif input_def.has("default"):
 		v = input_def.default
 	else:
+		# TODO Why `data_type` had to be passed here? Can't we use `input_def.type`?
 		v = _scalar_type_defaults[data_type]
 		
 	var e = Expr.new()
-	e.code = _var_to_shader(v)
+	if typeof(v) != TYPE_STRING:
+		e.code = _var_to_shader(v)
+	else:
+		e.code = v
 	
 #	if data_type == "float":
 #		# TODO Not pretty
@@ -348,9 +401,13 @@ func _autocast(e, dst_type):
 					e.code = str(dst_type, "(", e.code, ", 0.0, 1.0)")
 				3:
 					e.code = str(dst_type, "(", e.code, ", 1.0)")
-	else:
+					
+	elif src_dim > dst_dim:
 		var s = _scalar_type_members.substr(0, dst_dim)
 		e.code = str("(", e.code, ").", s)
+	
+	else:
+		e.code = str(dst_type, "(", e.code, ")")
 		
 	e.type = dst_type
 	return e
@@ -362,6 +419,16 @@ func _generate_var_name():
 	return vn
 
 
+func _require_function(fname, code):
+	for f in _functions:
+		if f.name == fname:
+			return
+	var f = _Function.new()
+	f.name = fname
+	f.code = code
+	_functions.append(f)
+
+
 func _get_full_code():
 	var lines = [
 		"shader_type canvas_item;",
@@ -369,10 +436,13 @@ func _get_full_code():
 	]
 	
 	if len(_texture_uniforms) > 0:
-		for node_id in _texture_uniforms:
-			var uniform_name = _texture_uniforms[node_id]
-			lines.append(str("uniform sampler2D ", uniform_name, ";"))
+		for ts in _texture_uniforms:
+			lines.append(str("uniform sampler2D ", ts.uniform_name, ";"))
 		lines.append("")
+	
+	for f in _functions:
+		lines.append(f.code)
+		#lines.append("")
 	
 	lines.append("void fragment() {")
 	for statement in _statements:
@@ -394,7 +464,7 @@ static func _var_to_shader(v, no_alpha=false):
 				return str(v)
 
 		TYPE_INT:
-			return str(v, ".0")
+			return str(v)
 
 		TYPE_VECTOR2:
 			return str("vec2(", \
