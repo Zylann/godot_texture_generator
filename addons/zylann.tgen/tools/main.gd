@@ -61,6 +61,8 @@ func _add_graph_node(type_name, position = Vector2()):
 	
 	controller.setup_for_node_type(type_name)
 	controller.connect("param_changed", self, "_on_node_controller_param_changed")
+	
+	node_view.select()
 
 
 func _on_GraphView_graph_changed():

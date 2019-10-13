@@ -123,8 +123,7 @@ func _gui_input(event):
 		if event.pressed:
 			if event.button_index == BUTTON_LEFT:
 				_pressed = true
-			grab_click_focus()
-			#emit_signal("selected")
+			select()
 		else:
 			_pressed = false
 	
@@ -140,6 +139,12 @@ func _get_minimum_size():
 	minsize.x += _container.margin_left * 2
 	minsize.y += _container.margin_top * 2
 	return minsize
+
+
+func select():
+	grab_focus()
+	#grab_click_focus()
+	#emit_signal("selected")
 
 
 func _on_GraphViewNode_focus_entered():
