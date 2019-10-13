@@ -6,10 +6,11 @@ const Compiler = preload("./../compiler.gd")
 const DAG = preload("./../util/graph.gd")
 const CodeFont = preload("./fonts/hack_regular.tres")
 const NodeController = preload("./node_controller.gd")
+const Preview2D = preload("./preview_2d/preview_2d.gd")
+const Preview2DScene = preload("./preview_2d/preview_2d.tscn")
 
 onready var _graph_view = get_node("VBoxContainer/MainView/GraphView")
 onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/CodeView/TabContainer")
-onready var _preview = get_node("VBoxContainer/MainView/BottomPanel/Preview")
 onready var _bottom_panel = get_node("VBoxContainer/MainView/BottomPanel")
 onready var _renderer = get_node("Renderer")
 onready var _status_label = get_node("VBoxContainer/StatusBar/Label")
@@ -19,7 +20,6 @@ var _graph_view_context_menu : PopupMenu = null
 
 func _ready():
 	NodeDefs.check()
-	_preview.texture = _renderer.get_texture()
 
 
 static func create_graph_node(type_name):
@@ -173,10 +173,10 @@ func _on_Renderer_progress_notified(progress):
 	
 	# TODO Mostly for debugging, won't stay that way
 	for child in _bottom_panel.get_children():
-		if child is TextureRect:
+		if child is Preview2D:
 			child.queue_free()
 	var textures = _renderer.get_textures()
 	for tex in textures:
-		var t = TextureRect.new()
-		t.texture = tex
+		var t = Preview2DScene.instance()
+		t.call_deferred("set_texture", tex)
 		_bottom_panel.add_child(t)
