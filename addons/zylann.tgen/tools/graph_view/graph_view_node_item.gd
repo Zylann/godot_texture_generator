@@ -10,6 +10,8 @@ signal connection_drag_stopped
 
 var _input_slot: Control = null
 var _output_slot: Control = null
+var _left_spacer: Control = null
+var _right_spacer: Control = null
 var _mode = MODE_PARAM
 var _control: Control = null
 var _pressed = false
@@ -23,6 +25,10 @@ func _gather_nodes():
 		_input_slot = get_node("InputSlot")
 	if _output_slot == null:
 		_output_slot = get_node("OutputSlot")
+	if _left_spacer == null:
+		_left_spacer = get_node("LeftSpacer")
+	if _right_spacer == null:
+		_right_spacer = get_node("RightSpacer")
 	if _label == null:
 		_label = get_node("Label")
 
@@ -35,6 +41,8 @@ func set_mode(mode):
 	_gather_nodes()
 	_input_slot.visible = (mode == MODE_INPUT)
 	_output_slot.visible = (mode == MODE_OUTPUT)
+	_left_spacer.visible = (mode != MODE_INPUT)
+	_right_spacer.visible = (mode != MODE_OUTPUT)
 	_mode = mode
 	if _mode == MODE_OUTPUT:
 		_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL

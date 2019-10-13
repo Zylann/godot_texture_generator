@@ -4,9 +4,6 @@
 [ext_resource path="res://addons/zylann.tgen/tools/graph_view/slot_left_stylebox.tres" type="StyleBox" id=2]
 [ext_resource path="res://addons/zylann.tgen/tools/graph_view/slot_right_stylebox.tres" type="StyleBox" id=3]
 
-
-
-
 [node name="GraphViewNodeItem" type="HBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -22,6 +19,12 @@ margin_bottom = 24.0
 rect_min_size = Vector2( 24, 24 )
 custom_styles/panel = ExtResource( 2 )
 
+[node name="LeftSpacer" type="Control" parent="."]
+margin_left = 28.0
+margin_right = 36.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 8, 0 )
+
 [node name="Label" type="Label" parent="."]
 visible = false
 margin_left = 28.0
@@ -29,9 +32,15 @@ margin_top = 5.0
 margin_right = 28.0
 margin_bottom = 19.0
 
+[node name="RightSpacer" type="Control" parent="."]
+margin_left = 40.0
+margin_right = 48.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 8, 0 )
+
 [node name="OutputSlot" type="Panel" parent="."]
-margin_left = 28.0
-margin_right = 52.0
+margin_left = 52.0
+margin_right = 76.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 24, 24 )
 custom_styles/panel = ExtResource( 3 )
