@@ -167,6 +167,7 @@ func _generate_pass(parse_list, node_pass_indexes):
 	_expressions.clear()
 	_statements.clear()
 	_texture_uniforms.clear()
+	_functions.clear()
 	
 	for node_index in len(parse_list) - 1:
 		
