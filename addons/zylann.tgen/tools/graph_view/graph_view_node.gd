@@ -2,10 +2,13 @@ extends Control
 
 const Item = preload("./graph_view_node_item.gd")
 const ItemScene = preload("./graph_view_node_item.tscn")
+const NormalBgStylebox = preload("./node_stylebox.tres")
+const SelectedBgStylebox = preload("./node_selected_stylebox.tres")
 
 signal connection_dragging(from_item)
 signal connection_drag_stopped(from_item)
 signal moved
+#signal selected
 
 var _container : Container = null
 var _title: Label = null
@@ -25,6 +28,7 @@ func _gather_nodes():
 
 
 func _ready():
+	#add_stylebox_override("Panel", NormalBgStylebox)
 	_gather_nodes()
 
 
@@ -119,6 +123,8 @@ func _gui_input(event):
 		if event.pressed:
 			if event.button_index == BUTTON_LEFT:
 				_pressed = true
+			grab_click_focus()
+			#emit_signal("selected")
 		else:
 			_pressed = false
 	
@@ -134,3 +140,19 @@ func _get_minimum_size():
 	minsize.x += _container.margin_left * 2
 	minsize.y += _container.margin_top * 2
 	return minsize
+
+
+func _on_GraphViewNode_focus_entered():
+	_set_focused_visual(true)
+
+
+func _on_GraphViewNode_focus_exited():
+	_set_focused_visual(false)
+
+
+func _set_focused_visual(focused):
+	if focused:
+		add_stylebox_override("panel", SelectedBgStylebox)
+	else:
+		add_stylebox_override("panel", NormalBgStylebox)
+
