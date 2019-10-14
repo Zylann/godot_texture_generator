@@ -65,11 +65,18 @@ func get_arcs():
 
 
 func remove_node(node_id):
+
 	var node = _nodes[node_id]
 	assert(node.id == node_id)
-	for slot in node.slots:
+
+	for slot in node.inputs:
 		for arc_id in slot:
 			remove_arc(arc_id)
+
+	for slot in node.outputs:
+		for arc_id in slot:
+			remove_arc(arc_id)
+
 	_nodes.erase(node_id)
 
 

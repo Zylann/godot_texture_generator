@@ -182,3 +182,7 @@ func _on_Renderer_progress_notified(progress):
 		var t = Preview2DScene.instance()
 		t.call_deferred("set_texture", tex)
 		_bottom_panel.add_child(t)
+
+
+func _on_GraphView_delete_node_requested(node):
+	_graph_view.remove_node(node.get_id())

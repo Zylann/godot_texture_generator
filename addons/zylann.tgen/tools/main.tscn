@@ -47,7 +47,6 @@ margin_right = 1024.0
 margin_bottom = 544.0
 
 [node name="CodeView" type="ColorRect" parent="VBoxContainer/MainView/BottomPanel"]
-editor/display_folded = true
 margin_right = 1024.0
 margin_bottom = 132.0
 size_flags_horizontal = 3
@@ -75,5 +74,6 @@ text = "Status"
 [node name="Renderer" type="Node" parent="."]
 script = ExtResource( 3 )
 [connection signal="context_menu_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_context_menu_requested"]
+[connection signal="delete_node_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_delete_node_requested"]
 [connection signal="graph_changed" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_graph_changed"]
 [connection signal="progress_notified" from="Renderer" to="." method="_on_Renderer_progress_notified"]

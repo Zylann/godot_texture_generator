@@ -14,6 +14,7 @@ const Util = preload("./../../util/util.gd")
 
 signal graph_changed
 signal context_menu_requested(position)
+signal delete_node_requested(node)
 
 var _graph = DAG.new()
 var _nodes = {}
@@ -51,7 +52,7 @@ func get_graph():
 	return _graph
 
 
-func add_node(node, title) -> Control:
+func add_node(node: DAG.TGNode, title: String) -> Control:
 	_graph.add_node(node)
 	emit_signal("graph_changed")
 	
@@ -68,6 +69,18 @@ func add_node(node, title) -> Control:
 	_nodes[node.id] = node_view
 	
 	return node_view
+
+
+func remove_node(node_id: int):
+	var node_view = _nodes[node_id]
+	node_view.queue_free()
+	_nodes.erase(node_id)
+	
+	_graph.remove_node(node_id)
+
+	emit_signal("graph_changed")
+	
+	update()
 
 
 func try_add_arc(from_id, from_slot, to_id, to_slot):
@@ -107,6 +120,23 @@ func _gui_input(event):
 		if event.pressed:
 			if event.button_index == BUTTON_RIGHT:
 				emit_signal("context_menu_requested", event.position)
+
+
+func _unhandled_input(event):	
+	if event is InputEventKey:
+		if event.pressed:
+			if event.scancode == KEY_DELETE:
+				var selected_node = _get_selected_node()
+				if selected_node != null:
+					emit_signal("delete_node_requested", selected_node)
+
+
+func _get_selected_node():
+	for i in get_child_count():
+		var child = get_child(i)
+		if child is GraphViewNode and child.has_focus():
+			return child
+	return null
 
 
 func _on_node_connection_dragging(item, node_view):
