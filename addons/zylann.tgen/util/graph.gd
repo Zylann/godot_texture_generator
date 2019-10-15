@@ -44,12 +44,26 @@ func _make_id():
 	return id
 
 
+func clear():
+	_nodes.clear()
+	_arcs.clear()
+	_next_id = 1
+
+
 func add_node(n):
-	var id = _make_id()
-	assert(not _nodes.has(id))
-	_nodes[id] = n
-	n.id = id
-	return id
+	if n.id == -1:
+		var id = _make_id()
+		assert(not _nodes.has(id))
+		_nodes[id] = n
+		n.id = id
+	
+	else:
+		assert(not _nodes.has(n.id))
+		if _next_id <= n.id:
+			_next_id = n.id + 1
+		_nodes[n.id] = n
+		
+	return n.id
 
 
 func get_node(node_id):
@@ -128,13 +142,20 @@ func check_connection(from_id, from_slot, to_id, to_slot):
 	return true
 
 
-func add_arc(from_id, from_slot, to_id, to_slot):
+func add_arc(from_id, from_slot, to_id, to_slot, arc_id = -1) -> int:
 	
 	assert(from_id >= 0)
 	assert(to_id >= 0)
 	assert(from_slot >= 0)
 	assert(to_slot >= 0)
 	assert(from_id != to_id)
+	
+	if arc_id == -1:
+		arc_id = _make_id()
+	else:
+		if _next_id <= arc_id:
+			_next_id = arc_id + 1
+	assert(not _arcs.has(arc_id))
 	
 	# TODO Check cycle
 	
@@ -154,8 +175,6 @@ func add_arc(from_id, from_slot, to_id, to_slot):
 	arc.to_id = to_id
 	arc.from_slot = from_slot
 	arc.to_slot = to_slot
-	var arc_id = _make_id()
-	assert(not _arcs.has(arc_id))
 	_arcs[arc_id] = arc
 	
 	from_node.outputs[from_slot].append(arc_id)

@@ -21,10 +21,13 @@ margin_right = 1024.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 0, 24 )
 
-[node name="MenuButton" type="MenuButton" parent="VBoxContainer/MenuBar"]
+[node name="FileMenuButton" type="MenuButton" parent="VBoxContainer/MenuBar"]
 margin_right = 12.0
 margin_bottom = 20.0
 text = "File"
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="MainView" type="VSplitContainer" parent="VBoxContainer"]
 margin_top = 28.0

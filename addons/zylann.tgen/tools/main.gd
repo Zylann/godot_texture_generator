@@ -4,65 +4,89 @@ extends Control
 const NodeDefs = preload("./../node_defs.gd")
 const Compiler = preload("./../compiler.gd")
 const DAG = preload("./../util/graph.gd")
+const GraphNodeFactory = preload("./../graph_node_factory.gd")
 const CodeFont = preload("./fonts/hack_regular.tres")
 const NodeController = preload("./node_controller.gd")
 const Preview2D = preload("./preview_2d/preview_2d.gd")
 const Preview2DScene = preload("./preview_2d/preview_2d.tscn")
+const GraphSerializer = preload("./../graph_serializer.gd")
+
+const MENU_FILE_OPEN = 0
+const MENU_FILE_SAVE = 1
+const MENU_FILE_SAVE_AS = 2
 
 onready var _graph_view = get_node("VBoxContainer/MainView/GraphView")
 onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/CodeView/TabContainer")
 onready var _bottom_panel = get_node("VBoxContainer/MainView/BottomPanel")
 onready var _renderer = get_node("Renderer")
 onready var _status_label = get_node("VBoxContainer/StatusBar/Label")
+onready var _file_menu = get_node("VBoxContainer/MenuBar/FileMenuButton")
 
 var _graph_view_context_menu : PopupMenu = null
+var _open_file_dialog : FileDialog = null
+var _save_file_dialog : FileDialog = null
+var _error_dialog : AcceptDialog = null
+
+var _current_file_path := ""
 
 
 func _ready():
+	
 	NodeDefs.check()
-
-
-static func create_graph_node(type_name):
-
-	var type = NodeDefs.get_type_by_name(type_name)
-	var node = DAG.TGNode.new()
-
-	node.data = {
-		"type": type_name,
-		"params": {},
-		"rect": Rect2()
-	}
-
-	for i in len(type.inputs):
-		node.inputs.append([])
-
-	for i in len(type.outputs):
-		node.outputs.append([])
-
-	for i in len(type.params):
-		var p = type.params[i]
-		var v = null
-		if p.has("default"):
-			v = p.default
-		node.data.params[p.name] = v
-
-	return node
+	
+	_file_menu.get_popup().add_item("Open...", MENU_FILE_OPEN)
+	_file_menu.get_popup().add_separator()
+	_file_menu.get_popup().add_item("Save", MENU_FILE_SAVE)
+	_file_menu.get_popup().add_item("Save As...", MENU_FILE_SAVE_AS)
+	_file_menu.get_popup().connect("id_pressed", self, "_on_file_menu_id_pressed")
+	
+	var fd := FileDialog.new()
+	fd.access = FileDialog.ACCESS_FILESYSTEM
+	fd.mode = FileDialog.MODE_OPEN_FILE
+	fd.window_title = "Open Graph"
+	fd.add_filter("*.tgen ; TGEN files")
+	fd.connect("file_selected", self, "_on_open_file_dialog_file_selected")
+	add_child(fd)
+	_open_file_dialog = fd
+	
+	fd = FileDialog.new()
+	fd.access = FileDialog.ACCESS_FILESYSTEM
+	fd.mode = FileDialog.MODE_SAVE_FILE
+	fd.window_title = "Save Graph"
+	fd.add_filter("*.tgen ; TGEN files")
+	fd.connect("file_selected", self, "_on_save_file_dialog_file_selected")
+	add_child(fd)
+	_save_file_dialog = fd
+	
+	_error_dialog = AcceptDialog.new()
+	add_child(_error_dialog)
 
 
 func _add_graph_node(type_name, position = Vector2()):
 	
-	var node = create_graph_node(type_name)
-	var node_view = _graph_view.add_node(node, type_name)
-	node_view.rect_position = position
+	var node = GraphNodeFactory.create_graph_node(type_name)
+	
+	var graph = _graph_view.get_graph()
+	graph.add_node(node)
+	
+	var node_view = _graph_view.create_node_view(node.id, type_name)
+	
+	_setup_node_view_controller(node_view, node)
+	
+	node_view.rect_position = position	
+	node_view.select()
+	
+	_recompile_graph()
+
+
+func _setup_node_view_controller(node_view, node):
 	
 	var controller = NodeController.new()
 	node_view.add_child(controller)
 	node_view.set_controller(controller)
 	
-	controller.setup_for_node_type(type_name)
+	controller.setup_for_node_type(node.data.type)
 	controller.connect("param_changed", self, "_on_node_controller_param_changed")
-	
-	node_view.select()
 
 
 func _on_GraphView_graph_changed():
@@ -82,8 +106,6 @@ func _recompile_graph():
 	_display_render_steps_in_debug_panel(render_steps)
 	
 	_renderer.submit(render_steps)
-	
-	# TODO Make renderer
 
 
 func _display_render_steps_in_debug_panel(render_steps):
@@ -158,18 +180,18 @@ func _on_GraphView_context_menu_requested(position):
 	menu.popup()
 
 
-static func _add_node_type_to_menu(menu, type_name):
-	var i = menu.get_item_count()
+static func _add_node_type_to_menu(menu: PopupMenu, type_name: String):
+	var i := menu.get_item_count()
 	menu.add_item(type_name)
 	menu.set_item_metadata(i, type_name)
 
 
 func _on_graph_view_context_menu_item_selected(index, menu, position):
-	var type_name = menu.get_item_metadata(index)
+	var type_name := menu.get_item_metadata(index) as String
 	_add_graph_node(type_name, position)
 
 
-func _on_Renderer_progress_notified(progress):
+func _on_Renderer_progress_notified(progress: float):
 	_status_label.text = str("Rendering ", int(progress * 100.0), " %")
 	#_preview.texture = _renderer.get_texture()
 	
@@ -184,5 +206,91 @@ func _on_Renderer_progress_notified(progress):
 		_bottom_panel.add_child(t)
 
 
-func _on_GraphView_delete_node_requested(node):
-	_graph_view.remove_node(node.get_id())
+func _on_GraphView_delete_node_requested(node_view):
+	
+	var graph = _graph_view.get_graph()
+	graph.remove_node(node_view.get_id())
+	_recompile_graph()
+	
+	_graph_view.remove_node(node_view.get_id())
+
+
+# To remember nodes positions in the graph view
+func _tag_nodes_with_gui_data():
+	var graph = _graph_view.get_graph()
+	var nodes = graph.get_nodes()
+	for node_id in nodes:
+		var node = nodes[node_id]
+		var node_view : Control = _graph_view.get_node_view(node_id)
+		var rect = node_view.get_rect()
+		node.data["rect"] = rect
+
+
+func _on_file_menu_id_pressed(id: int):
+	match id:
+		MENU_FILE_OPEN:
+			_request_open_file_dialog()
+		
+		MENU_FILE_SAVE:
+			if _current_file_path == "":
+				_request_save_file_dialog()
+			else:
+				_save_file(_current_file_path)
+		
+		MENU_FILE_SAVE_AS:
+			_request_save_file_dialog()
+
+
+func _request_open_file_dialog():
+	_open_file_dialog.popup_centered_ratio()
+
+
+func _on_open_file_dialog_file_selected(fpath: String):
+	_open_file(fpath)
+	
+
+func _request_save_file_dialog():
+	_save_file_dialog.popup_centered_ratio()
+
+
+func _on_save_file_dialog_file_selected(fpath: String):
+	_save_file(fpath)
+
+
+func _open_file(fpath: String):
+
+	assert(fpath != "")
+	var graph = GraphSerializer.load_from_file(fpath)
+
+	if graph != null:
+		
+		_graph_view.clear()
+
+		var nodes = graph.get_nodes()
+		for id in nodes:
+			var node = nodes[id]
+			print("Adding ", node.data.type)
+			var node_view = _graph_view.create_node_view(node.id, node.data.type)
+			node_view.rect_position = node.data.rect.position
+			_setup_node_view_controller(node_view, node)
+		
+		_current_file_path = fpath
+		_graph_view.set_graph(graph)
+		_recompile_graph()
+		
+	else:
+		_error_dialog.dialog_text = str("Could not load \"", fpath, "\"")
+		_error_dialog.popup_centered_minsize()
+
+
+func _save_file(fpath: String):
+	assert(fpath != "")
+	_tag_nodes_with_gui_data()
+	var graph = _graph_view.get_graph()
+	if GraphSerializer.save_to_file(fpath, graph):
+		_current_file_path = fpath
+	else:
+		_error_dialog.dialog_text = str("Could not save \"", fpath, "\"")
+		_error_dialog.popup_centered_minsize()
+
+

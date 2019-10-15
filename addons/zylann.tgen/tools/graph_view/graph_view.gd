@@ -22,51 +22,37 @@ var _dragging_from_id = -1
 var _dragging_from_item = null
 
 
-func _gather_nodes():
-	pass
-
-
-func _ready():
-	_gather_nodes()
-
-
 func clear():
-	_graph.clear()
+	_graph = DAG.new()
 	for id in _nodes:
 		var node = _nodes[id]
 		node.queue_free()
 	_nodes.clear()
-	emit_signal("graph_changed")
+	update()
 
 
 func set_graph(graph):
-	if _graph == graph:
-		return
-	clear()
+	# Mostly used to draw arcs cheaply...
 	_graph = graph
-	emit_signal("graph_changed")
-	# TODO Recreate all views from graph?
 
 
 func get_graph():
 	return _graph
 
 
-func add_node(node: DAG.TGNode, title: String) -> Control:
-	_graph.add_node(node)
-	emit_signal("graph_changed")
-	
-	assert(not _nodes.has(node.id))
-	assert(node.id >= 0)
+func create_node_view(node_id: int, title: String) -> GraphViewNode:
+
+	assert(not _nodes.has(node_id))
+	assert(node_id >= 0)
 	
 	var node_view = NodeScene.instance()
 	node_view.set_title(title)
-	node_view.set_id(node.id)
+	node_view.set_id(node_id)
 	add_child(node_view)
 	node_view.connect("connection_dragging", self, "_on_node_connection_dragging", [node_view])
 	node_view.connect("connection_drag_stopped", self, "_on_node_connection_drag_stopped")
 	node_view.connect("moved", self, "_on_node_moved")
-	_nodes[node.id] = node_view
+	_nodes[node_id] = node_view
 	
 	return node_view
 
@@ -75,14 +61,14 @@ func remove_node(node_id: int):
 	var node_view = _nodes[node_id]
 	node_view.queue_free()
 	_nodes.erase(node_id)
-	
-	_graph.remove_node(node_id)
-
-	emit_signal("graph_changed")
-	
 	update()
 
 
+func get_node_view(node_id: int) -> GraphViewNode:
+	return _nodes[node_id]
+
+
+# TODO Don't modify graph from the view
 func try_add_arc(from_id, from_slot, to_id, to_slot):
 	
 	if not _graph.check_connection(from_id, from_slot, to_id, to_slot):
