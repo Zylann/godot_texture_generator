@@ -1,8 +1,11 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://addons/zylann.tgen/tools/main.gd" type="Script" id=1]
-[ext_resource path="res://addons/zylann.tgen/tools/graph_view/graph_view.tscn" type="PackedScene" id=2]
+[ext_resource path="res://addons/zylann.tgen/tools/icons/icon_file.svg" type="Texture" id=2]
 [ext_resource path="res://addons/zylann.tgen/renderer.gd" type="Script" id=3]
+[ext_resource path="res://addons/zylann.tgen/tools/icons/icon_save.svg" type="Texture" id=4]
+[ext_resource path="res://addons/zylann.tgen/tools/graph_view/graph_view.tscn" type="PackedScene" id=5]
+[ext_resource path="res://addons/zylann.tgen/tools/icons/icon_load.svg" type="Texture" id=6]
 
 [node name="Main" type="Control"]
 anchor_right = 1.0
@@ -21,13 +24,43 @@ margin_right = 1024.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 0, 24 )
 
-[node name="FileMenuButton" type="MenuButton" parent="VBoxContainer/MenuBar"]
-margin_right = 12.0
-margin_bottom = 20.0
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MenuBar"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="FileMenuButton" type="MenuButton" parent="VBoxContainer/MenuBar/HBoxContainer"]
+margin_right = 35.0
+margin_bottom = 24.0
 text = "File"
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/MenuBar/HBoxContainer"]
+margin_left = 39.0
+margin_right = 43.0
+margin_bottom = 24.0
+
+[node name="NewButton" type="ToolButton" parent="VBoxContainer/MenuBar/HBoxContainer"]
+margin_left = 47.0
+margin_right = 75.0
+margin_bottom = 24.0
+icon = ExtResource( 2 )
+
+[node name="OpenButton" type="ToolButton" parent="VBoxContainer/MenuBar/HBoxContainer"]
+margin_left = 79.0
+margin_right = 107.0
+margin_bottom = 24.0
+icon = ExtResource( 6 )
+
+[node name="SaveButton" type="ToolButton" parent="VBoxContainer/MenuBar/HBoxContainer"]
+margin_left = 111.0
+margin_right = 139.0
+margin_bottom = 24.0
+icon = ExtResource( 4 )
 
 [node name="MainView" type="VSplitContainer" parent="VBoxContainer"]
 margin_top = 28.0
@@ -36,7 +69,7 @@ margin_bottom = 572.0
 size_flags_vertical = 3
 split_offset = 400
 
-[node name="GraphView" parent="VBoxContainer/MainView" instance=ExtResource( 2 )]
+[node name="GraphView" parent="VBoxContainer/MainView" instance=ExtResource( 5 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_left = 0.0
@@ -76,6 +109,9 @@ text = "Status"
 
 [node name="Renderer" type="Node" parent="."]
 script = ExtResource( 3 )
+[connection signal="pressed" from="VBoxContainer/MenuBar/HBoxContainer/NewButton" to="." method="_on_NewButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/MenuBar/HBoxContainer/OpenButton" to="." method="_on_OpenButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/MenuBar/HBoxContainer/SaveButton" to="." method="_on_SaveButton_pressed"]
 [connection signal="context_menu_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_context_menu_requested"]
 [connection signal="delete_node_requested" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_delete_node_requested"]
 [connection signal="graph_changed" from="VBoxContainer/MainView/GraphView" to="." method="_on_GraphView_graph_changed"]

@@ -21,7 +21,7 @@ onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/
 onready var _bottom_panel = get_node("VBoxContainer/MainView/BottomPanel")
 onready var _renderer = get_node("Renderer")
 onready var _status_label = get_node("VBoxContainer/StatusBar/Label")
-onready var _file_menu = get_node("VBoxContainer/MenuBar/FileMenuButton")
+onready var _file_menu = get_node("VBoxContainer/MenuBar/HBoxContainer/FileMenuButton")
 
 var _graph_view_context_menu : PopupMenu = null
 var _open_file_dialog : FileDialog = null
@@ -341,3 +341,14 @@ func _new_graph():
 	_current_file_path = ""
 	_has_unsaved_modifications = false
 
+
+func _on_NewButton_pressed():
+	_request_new_graph()
+
+
+func _on_OpenButton_pressed():
+	_request_open_file_dialog()
+
+
+func _on_SaveButton_pressed():
+	_request_save()
