@@ -11,9 +11,10 @@ const Preview2D = preload("./preview_2d/preview_2d.gd")
 const Preview2DScene = preload("./preview_2d/preview_2d.tscn")
 const GraphSerializer = preload("./../graph_serializer.gd")
 
-const MENU_FILE_OPEN = 0
-const MENU_FILE_SAVE = 1
-const MENU_FILE_SAVE_AS = 2
+const MENU_FILE_NEW = 0
+const MENU_FILE_OPEN = 1
+const MENU_FILE_SAVE = 2
+const MENU_FILE_SAVE_AS = 3
 
 onready var _graph_view = get_node("VBoxContainer/MainView/GraphView")
 onready var _codes_tab_container = get_node("VBoxContainer/MainView/BottomPanel/CodeView/TabContainer")
@@ -26,14 +27,18 @@ var _graph_view_context_menu : PopupMenu = null
 var _open_file_dialog : FileDialog = null
 var _save_file_dialog : FileDialog = null
 var _error_dialog : AcceptDialog = null
+var _discard_changes_dialog : ConfirmationDialog = null
 
 var _current_file_path := ""
+var _has_unsaved_modifications = false
+var _action_on_discard_changes = null
 
 
 func _ready():
 	
 	NodeDefs.check()
 	
+	_file_menu.get_popup().add_item("New...", MENU_FILE_NEW)
 	_file_menu.get_popup().add_item("Open...", MENU_FILE_OPEN)
 	_file_menu.get_popup().add_separator()
 	_file_menu.get_popup().add_item("Save", MENU_FILE_SAVE)
@@ -60,6 +65,13 @@ func _ready():
 	
 	_error_dialog = AcceptDialog.new()
 	add_child(_error_dialog)
+	
+	var cd = ConfirmationDialog.new()
+	cd.get_ok().text = "Don't save"
+	cd.connect("confirmed", self, "_on_discard_changes_dialog_confirmed")
+	cd.dialog_text = "Discard changes?"
+	add_child(cd)
+	_discard_changes_dialog = cd
 
 
 func _add_graph_node(type_name, position = Vector2()):
@@ -76,6 +88,7 @@ func _add_graph_node(type_name, position = Vector2()):
 	node_view.rect_position = position	
 	node_view.select()
 	
+	_has_unsaved_modifications = true
 	_recompile_graph()
 
 
@@ -90,10 +103,12 @@ func _setup_node_view_controller(node_view, node):
 
 
 func _on_GraphView_graph_changed():
+	_has_unsaved_modifications = true
 	_recompile_graph()
 
 
 func _on_node_controller_param_changed():
+	_has_unsaved_modifications = true
 	_recompile_graph()
 	
 
@@ -228,26 +243,37 @@ func _tag_nodes_with_gui_data():
 
 func _on_file_menu_id_pressed(id: int):
 	match id:
+		MENU_FILE_NEW:
+			_request_new_graph()
+		
 		MENU_FILE_OPEN:
 			_request_open_file_dialog()
 		
 		MENU_FILE_SAVE:
-			if _current_file_path == "":
-				_request_save_file_dialog()
-			else:
-				_save_file(_current_file_path)
+			_request_save()
 		
 		MENU_FILE_SAVE_AS:
 			_request_save_file_dialog()
 
 
 func _request_open_file_dialog():
-	_open_file_dialog.popup_centered_ratio()
+	if _has_unsaved_modifications:
+		_discard_changes_dialog.popup_centered_minsize()
+		_action_on_discard_changes = funcref(_open_file_dialog, "popup_centered_ratio")
+	else:
+		_open_file_dialog.popup_centered_ratio()
 
 
 func _on_open_file_dialog_file_selected(fpath: String):
 	_open_file(fpath)
-	
+
+
+func _request_save():
+	if _current_file_path == "":
+		_request_save_file_dialog()
+	else:
+		_save_file(_current_file_path)
+
 
 func _request_save_file_dialog():
 	_save_file_dialog.popup_centered_ratio()
@@ -269,7 +295,6 @@ func _open_file(fpath: String):
 		var nodes = graph.get_nodes()
 		for id in nodes:
 			var node = nodes[id]
-			print("Adding ", node.data.type)
 			var node_view = _graph_view.create_node_view(node.id, node.data.type)
 			node_view.rect_position = node.data.rect.position
 			_setup_node_view_controller(node_view, node)
@@ -277,6 +302,8 @@ func _open_file(fpath: String):
 		_current_file_path = fpath
 		_graph_view.set_graph(graph)
 		_recompile_graph()
+
+		_has_unsaved_modifications = false
 		
 	else:
 		_error_dialog.dialog_text = str("Could not load \"", fpath, "\"")
@@ -289,8 +316,28 @@ func _save_file(fpath: String):
 	var graph = _graph_view.get_graph()
 	if GraphSerializer.save_to_file(fpath, graph):
 		_current_file_path = fpath
+		_has_unsaved_modifications = false
 	else:
 		_error_dialog.dialog_text = str("Could not save \"", fpath, "\"")
 		_error_dialog.popup_centered_minsize()
 
+
+func _request_new_graph():
+	if _has_unsaved_modifications:
+		_discard_changes_dialog.popup_centered_minsize()
+		_action_on_discard_changes = funcref(self, "_new_graph")
+	else:
+		_new_graph()
+
+
+func _on_discard_changes_dialog_confirmed():
+	var f = _action_on_discard_changes
+	_action_on_discard_changes = null
+	f.call_func()
+
+
+func _new_graph():
+	_graph_view.clear()
+	_current_file_path = ""
+	_has_unsaved_modifications = false
 
