@@ -3,7 +3,7 @@ const family = "operation"
 const category = "Shapes"
 
 const inputs = [
-	{"name": "in", "type": "scalar", "default": 0}
+	{"name": "in", "type": "scalar", "default": 0.0}
 ]
 
 const params = [
