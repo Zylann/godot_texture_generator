@@ -57,8 +57,10 @@ func submit(render_steps):
 	_current_step_index = 0
 	
 	# TODO There must be a way to re-use viewports
-	while len(_render_steps) > len(_viewports):
-		_viewports.push_front(_create_viewport())
+	for rs in render_steps:
+		if len(_viewports) <= rs.viewport_id:
+			_viewports.resize(rs.viewport_id + 1)
+		_viewports[rs.viewport_id] = _create_viewport()
 	
 	if len(_render_steps) > 0:
 		_setup_pass(0)
@@ -71,10 +73,10 @@ func _restart():
 	submit(_render_steps)
 
 
-func _setup_pass(i):
+func _setup_pass(pass_index: int):
 	#print("Setting up pass ", i)
-	var rs = _render_steps[i]
-	var vi = _viewports[i]
+	var rs = _render_steps[pass_index]
+	var vi = _viewports[rs.viewport_id]
 	
 	# TODO No function to revert params??
 	vi.sprite.material = ShaderMaterial.new()
@@ -89,11 +91,11 @@ func _setup_pass(i):
 		var source = rs.texture_uniforms[uniform_name]
 		
 		var tex
-		if source.render_step_index != -1:
+		if source.viewport_id != -1:
 			# Textures coming from other viewports
-			assert(source.render_step_index >= 0)
-			assert(source.render_step_index < len(_render_steps))
-			var prev_viewport = _viewports[source.render_step_index]
+			assert(source.viewport_id >= 0)
+			assert(source.viewport_id < len(_render_steps))
+			var prev_viewport = _viewports[source.viewport_id]
 			tex = prev_viewport.viewport.get_texture()
 		
 		elif source.file_path != "":
@@ -111,13 +113,13 @@ func _setup_pass(i):
 	_process_composition()
 
 
-func _load_image_texture(file_path):
+func _load_image_texture(file_path: String) -> Texture:
 	if _image_cache.has(file_path):
 		return _image_cache[file_path]
 	return _force_load_image_texture(file_path)
 
 
-func _force_load_image_texture(file_path):
+func _force_load_image_texture(file_path: String) -> Texture:
 	var im = Image.new()
 	var err = im.load(file_path)
 	if err != OK:
@@ -136,7 +138,7 @@ func reload_images():
 	_restart()
 
 
-func _create_viewport():
+func _create_viewport() -> ViewportInfo:
 	var vp = Viewport.new()
 	vp.render_target_clear_mode = Viewport.CLEAR_MODE_ONLY_NEXT_FRAME
 	vp.render_target_update_mode = Viewport.UPDATE_ONCE
@@ -152,7 +154,7 @@ func _create_viewport():
 	return vi
 
 
-func _create_viewport_sprite(vp):
+func _create_viewport_sprite(vp: Viewport) -> Sprite:
 	var sprite = Sprite.new()
 	sprite.centered = false
 	sprite.texture = _get_dummy_texture()
@@ -163,7 +165,6 @@ func _create_viewport_sprite(vp):
 
 
 func _process(delta):
-	
 	if _wait_frames > 0:
 		_wait_frames -= 1
 		return
@@ -190,7 +191,7 @@ func _process_composition():
 	var type_name = rs.composition.type
 	var type = NodeDefs.get_type_by_name(type_name)
 	
-	var vi = _viewports[_current_step_index]
+	var vi = _viewports[rs.viewport_id]
 
 	var context = _RendererNodeContext.new()
 	context.iteration = _iteration
@@ -213,12 +214,14 @@ func _process_composition():
 
 
 # TODO Multiple outputs
-func get_texture():
-	var last = len(_render_steps) - 1
-	return _viewports[last].viewport.get_texture()
+func get_texture() -> Texture:
+	if len(_render_steps) == 0:
+		return null
+	var last_rs = _render_steps[-1]
+	return _viewports[last_rs.viewport_id].viewport.get_texture()
 
 
-func get_textures():
+func get_textures() -> Array:
 	var textures = []
 	for vi in _viewports:
 		textures.append(vi.viewport.get_texture())

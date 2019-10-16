@@ -47,12 +47,13 @@ class RenderStep:
 	var composition = null
 	# uniform name => texture source
 	var texture_uniforms = {}
+	var viewport_id = -1
 
 
 class TextureSource:
 	var uniform_name = ""
 	var composition_node_id = -1
-	var render_step_index = -1
+	var viewport_id = -1
 	var file_path = ""
 	
 #	func duplicate():
@@ -149,20 +150,22 @@ func compile():
 #		print("[", node.id, "] ", node.data.type)
 
 	var render_steps = []
-	var node_pass_indexes = {}
+	var node_passes = {}
 	
-	for parse_list in parse_lists:
-		var rs = _generate_pass(parse_list, node_pass_indexes)
+	for pass_index in len(parse_lists):
+		
+		var parse_list = parse_lists[pass_index]
+		var rs = _generate_pass(parse_list, node_passes, pass_index)
 		
 		var last_node = parse_list[-1]
-		node_pass_indexes[last_node.id] = len(render_steps)
+		node_passes[last_node.id] = rs
 		
 		render_steps.append(rs)
 	
 	return render_steps
 
 
-func _generate_pass(parse_list, node_pass_indexes):
+func _generate_pass(parse_list: Array, node_passes: Dictionary, pass_index: int) -> RenderStep:
 	
 	_expressions.clear()
 	_statements.clear()
@@ -211,10 +214,13 @@ func _generate_pass(parse_list, node_pass_indexes):
 	rs.shader_code = _get_full_code()
 	rs.shader = Shader.new()
 	rs.shader.code = rs.shader_code
+	# TODO Re-use viewports when possible
+	rs.viewport_id = pass_index
 	
 	for ts in _texture_uniforms:
 		if ts.composition_node_id != -1:
-			ts.render_step_index = node_pass_indexes[ts.composition_node_id]
+			var other_rs = node_passes[ts.composition_node_id]
+			ts.viewport_id = other_rs.viewport_id
 		rs.texture_uniforms[ts.uniform_name] = ts
 	
 	return rs
